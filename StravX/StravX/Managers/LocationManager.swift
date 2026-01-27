@@ -56,15 +56,26 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.allowsBackgroundLocationUpdates = true // Permet le tracking en arrière-plan
         locationManager.pausesLocationUpdatesAutomatically = false // Empêche la pause automatique
         authorizationStatus = locationManager.authorizationStatus
+
+        print("🔵 LocationManager initialisé")
+        print("🔵 Status actuel: \(authorizationStatus.rawValue)")
+        print("🔵 isNotDetermined: \(isNotDetermined)")
+        print("🔵 isAuthorized: \(isAuthorized)")
+        print("🔵 isDenied: \(isDenied)")
     }
 
     // MARK: - Authorization
 
     func requestAuthorization() {
+        print("🟢 requestAuthorization appelé")
+        print("🟢 Status actuel: \(authorizationStatus.rawValue)")
+
         switch authorizationStatus {
         case .notDetermined:
             // Demander la permission pour la première fois
+            print("🟡 Demande de permission...")
             locationManager.requestWhenInUseAuthorization()
+            print("🟡 requestWhenInUseAuthorization appelé")
         case .authorizedWhenInUse:
             // Si on a déjà la permission "pendant l'utilisation", on peut demander "toujours" si besoin
             // Pour une app de tracking sportif, on pourrait demander la permission "toujours" pour le tracking en arrière-plan

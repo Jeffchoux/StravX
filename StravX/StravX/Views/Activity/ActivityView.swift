@@ -13,6 +13,7 @@ struct ActivityView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Activity.date, order: .reverse) private var activities: [Activity]
     @State private var showingNewActivity = false
+    @State private var locationManager = LocationManager()
 
     var body: some View {
         NavigationStack {
@@ -64,6 +65,13 @@ struct ActivityView: View {
             .navigationBarTitleDisplayMode(.large)
             .fullScreenCover(isPresented: $showingNewActivity) {
                 NewActivityView()
+            }
+            .onAppear {
+                // Demander les permissions dès le premier écran
+                if locationManager.isNotDetermined {
+                    print("🔵 Demande de permission au premier lancement")
+                    locationManager.requestAuthorization()
+                }
             }
         }
     }
