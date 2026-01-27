@@ -7,10 +7,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @AppStorage("distanceUnit") private var distanceUnit: String = "km"
+    @State private var showingDeleteConfirmation = false
+    @Query private var activities: [Activity]
 
     var body: some View {
         NavigationStack {
@@ -63,6 +67,21 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Données") {
+                    Button(role: .destructive) {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Label("Supprimer toutes les données", systemImage: "trash.fill")
+                                .foregroundColor(.red)
+                            Spacer()
+                            Text("\(activities.count) activités")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
                 Section {
                     HStack {
                         Spacer()
@@ -91,6 +110,22 @@ struct SettingsView: View {
                         dismiss()
                     }
                 }
+            }
+            .alert("Supprimer toutes les données ?", isPresented: $showingDeleteConfirmation) {
+                Button("Annuler", role: .cancel) {}
+                Button("Supprimer", role: .destructive) {
+                    // Supprimer toutes les activités
+                    for activity in activities {
+                        modelContext.delete(activity)
+                    }
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        print("Erreur lors de la suppression: \(error)")
+                    }
+                }
+            } message: {
+                Text("Cette action est irréversible. Toutes vos activités seront définitivement supprimées.")
             }
         }
     }
