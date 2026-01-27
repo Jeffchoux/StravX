@@ -273,6 +273,16 @@ struct NewActivityView: View {
         // Vérifier qu'on a bien des données à sauvegarder
         guard duration > 0 else {
             print("Warning: No activity duration to save")
+            // Créer quand même une activité minimale pour éviter les crashes
+            let minimalActivity = Activity(
+                distance: 0,
+                duration: 1,
+                activityType: "running",
+                maxSpeed: 0,
+                routePoints: nil
+            )
+            modelContext.insert(minimalActivity)
+            try? modelContext.save()
             return
         }
 
