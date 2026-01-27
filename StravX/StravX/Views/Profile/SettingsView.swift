@@ -27,7 +27,7 @@ struct SettingsView: View {
                 }
 
                 Section("Informations") {
-                    Link(destination: URL(string: "https://github.com/stravx/privacy")!) {
+                    Link(destination: URL(string: "https://jeffchoux.github.io/StravX/privacy-policy.html")!) {
                         HStack {
                             Label("Politique de confidentialité", systemImage: "hand.raised.fill")
                             Spacer()
@@ -37,7 +37,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    Link(destination: URL(string: "https://github.com/stravx/terms")!) {
+                    Link(destination: URL(string: "https://jeffchoux.github.io/StravX/privacy-policy.html")!) {
                         HStack {
                             Label("Conditions d'utilisation", systemImage: "doc.text.fill")
                             Spacer()
@@ -56,7 +56,7 @@ struct SettingsView: View {
                 }
 
                 Section("Support") {
-                    Link(destination: URL(string: "mailto:support@stravx.app")!) {
+                    Link(destination: URL(string: "mailto:jeffchoux@users.noreply.github.com")!) {
                         HStack {
                             Label("Nous contacter", systemImage: "envelope.fill")
                             Spacer()
