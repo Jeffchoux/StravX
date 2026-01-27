@@ -86,58 +86,94 @@ struct NewActivityView: View {
                     Spacer()
 
                     // Boutons de contrôle
-                    HStack(spacing: 32) {
+                    VStack(spacing: 20) {
                         if locationManager.isTracking {
-                            // Bouton Pause
+                            // Bouton Pause principal
                             Button {
                                 pauseTracking()
                             } label: {
-                                Image(systemName: "pause.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, height: 80)
-                                    .background(Color.orange)
-                                    .clipShape(Circle())
+                                VStack(spacing: 8) {
+                                    Image(systemName: "pause.fill")
+                                        .font(.system(size: 40))
+                                    Text("PAUSE")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                }
+                                .foregroundColor(.white)
+                                .frame(width: 100, height: 100)
+                                .background(Color.orange)
+                                .clipShape(Circle())
+                                .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                         } else if locationManager.trackingStartTime != nil {
-                            // Bouton Resume
+                            // Bouton Resume principal
                             Button {
                                 resumeTracking()
                             } label: {
-                                Image(systemName: "play.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, height: 80)
-                                    .background(Color.green)
-                                    .clipShape(Circle())
+                                VStack(spacing: 8) {
+                                    Image(systemName: "play.fill")
+                                        .font(.system(size: 40))
+                                    Text("REPRENDRE")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                }
+                                .foregroundColor(.white)
+                                .frame(width: 100, height: 100)
+                                .background(Color.green)
+                                .clipShape(Circle())
+                                .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                         } else {
-                            // Bouton Start
+                            // Bouton Start principal
                             Button {
                                 startTracking()
                             } label: {
-                                Image(systemName: "play.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, height: 80)
-                                    .background(locationManager.isAuthorized ? Color.green : Color.gray)
-                                    .clipShape(Circle())
+                                VStack(spacing: 8) {
+                                    Image(systemName: "play.fill")
+                                        .font(.system(size: 40))
+                                    Text("DÉMARRER")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                }
+                                .foregroundColor(.white)
+                                .frame(width: 100, height: 100)
+                                .background(
+                                    locationManager.isAuthorized ?
+                                    LinearGradient(
+                                        colors: [.green, .mint],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ) : LinearGradient(
+                                        colors: [.gray],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .clipShape(Circle())
+                                .shadow(color: locationManager.isAuthorized ? .green.opacity(0.3) : .gray.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                             .disabled(!locationManager.isAuthorized)
                         }
 
-                        // Bouton Stop (visible seulement si tracking commencé)
+                        // Bouton Stop secondaire (plus petit)
                         if locationManager.trackingStartTime != nil {
                             Button {
                                 stopTracking()
                             } label: {
-                                Image(systemName: "stop.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, height: 80)
-                                    .background(Color.red)
-                                    .clipShape(Circle())
+                                HStack(spacing: 8) {
+                                    Image(systemName: "stop.fill")
+                                        .font(.title3)
+                                    Text("TERMINER")
+                                        .font(.headline)
+                                        .fontWeight(.bold)
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 30)
+                                .padding(.vertical, 15)
+                                .background(Color.red)
+                                .cornerRadius(25)
                             }
+                            .padding(.top, 10)
                         }
                     }
                     .padding(.bottom, 40)

@@ -16,25 +16,52 @@ struct ActivityView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if activities.isEmpty {
-                    emptyStateView
-                } else {
-                    activitiesListView
+            ZStack {
+                // Contenu principal
+                Group {
+                    if activities.isEmpty {
+                        emptyStateView
+                    } else {
+                        activitiesListView
+                    }
+                }
+
+                // Bouton flottant toujours visible
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+
+                        Button {
+                            showingNewActivity = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "play.fill")
+                                    .font(.title2)
+                                Text("DÉMARRER")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [.orange, .red],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .cornerRadius(30)
+                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, activities.isEmpty ? 100 : 30)
+                    }
                 }
             }
             .navigationTitle("Activités")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingNewActivity = true
-                    } label: {
-                        Label("Nouvelle activité", systemImage: "plus.circle.fill")
-                            .font(.title3)
-                    }
-                }
-            }
             .fullScreenCover(isPresented: $showingNewActivity) {
                 NewActivityView()
             }
@@ -46,31 +73,31 @@ struct ActivityView: View {
             Spacer()
 
             Image(systemName: "figure.run.circle")
-                .font(.system(size: 80))
-                .foregroundColor(.blue)
+                .font(.system(size: 100))
+                .foregroundColor(.gray.opacity(0.5))
 
-            VStack(spacing: 8) {
-                Text("Aucune activité")
-                    .font(.title2)
+            VStack(spacing: 12) {
+                Text("Prêt à bouger ?")
+                    .font(.title)
                     .fontWeight(.bold)
 
-                Text("Commencez votre première activité sportive")
+                Text("Appuyez sur DÉMARRER pour\ncommencer votre première activité")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-            }
 
-            Button {
-                showingNewActivity = true
-            } label: {
-                Label("Démarrer une activité", systemImage: "play.fill")
-                    .font(.headline)
-                    .frame(maxWidth: 300)
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.down.right")
+                        .font(.caption)
+                    Text("Bouton en bas à droite")
+                        .font(.caption)
+                }
+                .foregroundColor(.secondary.opacity(0.7))
+                .padding(.top, 8)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
 
             Spacer()
+            Spacer() // Extra spacer pour laisser de la place au bouton flottant
         }
         .padding()
     }

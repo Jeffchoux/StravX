@@ -18,9 +18,9 @@ final class Activity {
     var duration: TimeInterval // en secondes
     var activityType: String // "running", "cycling", "walking", "driving"
     var avgSpeed: Double // km/h
-    var maxSpeed: Double // km/h vitesse maximale
-    var isValid: Bool // false si triche détectée
-    var validationMessage: String? // Message d'invalidation si triche
+    var maxSpeed: Double = 0.0 // km/h vitesse maximale
+    var isValid: Bool = true // false si triche détectée
+    var validationMessage: String? = nil // Message d'invalidation si triche
     var routePoints: Data? // Encoded array of CLLocationCoordinate2D
 
     init(distance: Double, duration: TimeInterval, activityType: String = "running", maxSpeed: Double = 0, routePoints: Data? = nil) {
