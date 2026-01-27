@@ -56,7 +56,7 @@ struct SettingsView: View {
                 }
 
                 Section("Support") {
-                    Link(destination: URL(string: "mailto:jeffchoux@users.noreply.github.com")!) {
+                    Link(destination: URL(string: "mailto:contact@stravx.dev")!) {
                         HStack {
                             Label("Nous contacter", systemImage: "envelope.fill")
                             Spacer()
