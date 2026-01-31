@@ -26,11 +26,17 @@ struct ContentView: View {
                 }
                 .tag(1)
 
-            ProfileView()
+            ConquestView()
+                .tabItem {
+                    Label("Territoires", systemImage: "flag.fill")
+                }
+                .tag(2)
+
+            EnhancedProfileView()
                 .tabItem {
                     Label("Profil", systemImage: "person.circle")
                 }
-                .tag(2)
+                .tag(3)
         }
         .accentColor(.orange)
     }

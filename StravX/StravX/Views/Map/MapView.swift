@@ -8,15 +8,29 @@
 
 import SwiftUI
 import MapKit
+import SwiftData
 
 struct MapView: View {
+    @Environment(\.modelContext) private var modelContext
     @State private var locationManager = LocationManager()
+    @State private var territoryManager: TerritoryManager?
     @State private var position: MapCameraPosition = .automatic
+    @State private var showTerritories = true
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Map(position: $position) {
+                    // Afficher les territoires
+                    if showTerritories, let manager = territoryManager {
+                        ForEach(manager.visibleTerritories, id: \.tileID) { territory in
+                            MapPolygon(territory.geoTile.polygon)
+                                .foregroundStyle(territory.team.color.opacity(0.3))
+                                .stroke(territory.team.color, lineWidth: territory.isContested ? 3 : 1.5)
+                        }
+                    }
+
+                    // Afficher la position utilisateur
                     if let location = locationManager.currentLocation {
                         Annotation("Ma position", coordinate: location.coordinate) {
                             ZStack {
@@ -74,16 +88,41 @@ struct MapView: View {
                         .padding()
                     }
                 }
+
+                // Bouton toggle territoires
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button {
+                            showTerritories.toggle()
+                        } label: {
+                            Image(systemName: showTerritories ? "map.fill" : "map")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .frame(width: 50, height: 50)
+                                .background(Color.blue)
+                                .clipShape(Circle())
+                                .shadow(radius: 5)
+                        }
+                        .padding()
+                    }
+                    Spacer()
+                }
             }
             .navigationTitle("Carte")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
+                if territoryManager == nil {
+                    territoryManager = TerritoryManager(modelContext: modelContext)
+                }
                 if locationManager.isAuthorized {
                     updateCameraPosition()
+                    loadTerritories()
                 }
             }
             .onChange(of: locationManager.currentLocation) { oldValue, newValue in
                 updateCameraPosition()
+                loadTerritories()
             }
         }
     }
@@ -98,8 +137,14 @@ struct MapView: View {
             )
         }
     }
+
+    private func loadTerritories() {
+        guard let location = locationManager.currentLocation else { return }
+        territoryManager?.loadTerritoriesAround(location.coordinate, radius: 1500)
+    }
 }
 
 #Preview {
     MapView()
+        .modelContainer(for: [Activity.self, Territory.self, User.self], inMemory: true)
 }

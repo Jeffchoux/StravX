@@ -45,13 +45,13 @@ struct ActivityDetailView: View {
 
                 // Stats principales
                 HStack(spacing: 16) {
-                    StatBox(
+                    ActivityStatBox(
                         icon: "location.fill",
                         title: "Distance",
                         value: activity.distanceFormatted
                     )
 
-                    StatBox(
+                    ActivityStatBox(
                         icon: "clock.fill",
                         title: "Durée",
                         value: activity.durationFormatted
@@ -60,13 +60,13 @@ struct ActivityDetailView: View {
                 .padding(.horizontal)
 
                 HStack(spacing: 16) {
-                    StatBox(
+                    ActivityStatBox(
                         icon: "speedometer",
                         title: "Vitesse moy.",
                         value: activity.speedFormatted
                     )
 
-                    StatBox(
+                    ActivityStatBox(
                         icon: "calendar",
                         title: "Date",
                         value: activity.date.formatted(date: .abbreviated, time: .omitted)
@@ -131,7 +131,7 @@ struct ActivityDetailView: View {
     }
 }
 
-struct StatBox: View {
+struct ActivityStatBox: View {
     let icon: String
     let title: String
     let value: String

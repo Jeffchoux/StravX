@@ -8,16 +8,26 @@
 
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 struct NewActivityView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
     @State private var locationManager = LocationManager()
+    @State private var territoryManager: TerritoryManager?
     @State private var timer: Timer?
+    @State private var territoryCheckTimer: Timer?
     @State private var elapsedTime: TimeInterval = 0
     @State private var isPaused = false
     @State private var showingDiscardAlert = false
+    @State private var territoriesCaptured: Int = 0
+    @State private var xpGained: Int = 0
+    @State private var showingNotification: String? = nil
+    @State private var showingSummary = false
+    @State private var summaryData: (activity: Activity, territories: Int, xp: Int, levelUp: Bool, newLevel: Int)?
+    private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
+    private let hapticSuccess = UINotificationFeedbackGenerator()
 
     var body: some View {
         NavigationStack {
@@ -80,7 +90,29 @@ struct NewActivityView: View {
                                 unit: "km/h",
                                 icon: "speedometer"
                             )
+
+                            // Stat Territoires capturés
+                            if locationManager.isTracking || territoriesCaptured > 0 {
+                                StatCard(
+                                    title: "Territoires",
+                                    value: "\(territoriesCaptured)",
+                                    unit: "XP: \(xpGained)",
+                                    icon: "map.fill"
+                                )
+                            }
                         }
+                    }
+
+                    // Notification de capture
+                    if let notification = showingNotification {
+                        Text(notification)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.green)
+                            .cornerRadius(10)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .animation(.easeInOut, value: showingNotification)
                     }
 
                     Spacer()
@@ -204,12 +236,33 @@ struct NewActivityView: View {
                 Text("L'activité en cours sera perdue.")
             }
             .onAppear {
+                // Initialiser le TerritoryManager
+                if territoryManager == nil {
+                    territoryManager = TerritoryManager(modelContext: modelContext)
+                }
+
                 if !locationManager.isAuthorized {
                     locationManager.requestAuthorization()
                 }
             }
             .onDisappear {
                 timer?.invalidate()
+                territoryCheckTimer?.invalidate()
+            }
+            .fullScreenCover(isPresented: $showingSummary, onDismiss: {
+                dismiss() // Fermer NewActivityView après le résumé
+            }) {
+                if let data = summaryData {
+                    ActivitySummaryView(
+                        activity: data.activity,
+                        territoriesCaptured: data.territories,
+                        xpGained: data.xp,
+                        routeCoordinates: locationManager.routeCoordinates,
+                        capturedTileIDs: [],
+                        leveledUp: data.levelUp,
+                        newLevel: data.newLevel
+                    )
+                }
             }
         }
     }
@@ -227,6 +280,7 @@ struct NewActivityView: View {
         // Ne démarrer le timer que si le tracking a effectivement commencé
         if locationManager.isTracking {
             startTimer()
+            startTerritoryTracking()
         }
     }
 
@@ -234,26 +288,118 @@ struct NewActivityView: View {
         locationManager.pauseTracking()
         isPaused = true
         timer?.invalidate()
+        territoryCheckTimer?.invalidate()
     }
 
     private func resumeTracking() {
         locationManager.resumeTracking()
         isPaused = false
         startTimer()
+        startTerritoryTracking()
+    }
+
+    private func startTerritoryTracking() {
+        // Démarrer la session de capture de territoires
+        territoryManager?.startSession()
+        territoriesCaptured = 0
+        xpGained = 0
+
+        // Timer pour vérifier la position toutes les 3 secondes
+        territoryCheckTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+            checkTerritoryPassage()
+        }
+    }
+
+    private func checkTerritoryPassage() {
+        guard let location = locationManager.currentLocation else { return }
+        guard locationManager.isTracking else { return }
+
+        let oldTerritories = territoryManager?.capturedThisSession ?? 0
+
+        // Vérifier le passage dans un territoire
+        territoryManager?.checkPassage(at: location.coordinate)
+
+        // Récupérer les stats de la session
+        if let manager = territoryManager {
+            territoriesCaptured = manager.capturedThisSession
+            xpGained = manager.xpGainedThisSession
+
+            // Haptic feedback si nouvelle capture
+            if territoriesCaptured > oldTerritories {
+                hapticSuccess.notificationOccurred(.success)
+            }
+
+            // Afficher les notifications de capture
+            let notifications = manager.getAndClearNotifications()
+            for notification in notifications {
+                showNotification(notification)
+            }
+        }
+    }
+
+    private func showNotification(_ message: String) {
+        hapticImpact.impactOccurred()
+
+        withAnimation {
+            showingNotification = message
+        }
+
+        // Cacher après 2 secondes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation {
+                showingNotification = nil
+            }
+        }
     }
 
     private func stopTracking() {
-        // Sauvegarder l'activité AVANT d'arrêter le tracking pour conserver les données
-        saveActivity()
-
-        // Maintenant on peut arrêter le tracking et le timer
+        // Arrêter les timers
         timer?.invalidate()
+        territoryCheckTimer?.invalidate()
+
+        // Terminer la session de territoires et récupérer le résumé
+        let summary = territoryManager?.endSession()
+
+        // Capturer les données de l'activité AVANT de reset
+        let distance = locationManager.totalDistance
+        let duration = locationManager.elapsedTime
+        let maxSpeedKmh = locationManager.maxSpeedKmh
+        _ = locationManager.routeCoordinates // Coordonnées capturées pour le résumé
+
+        // Mettre à jour l'utilisateur avec l'activité
+        var leveledUp = false
+        var newLevel: Int?
+        if let user = territoryManager?.getUser() {
+            let oldLevel = user.level
+            user.recordActivity(
+                distance: distance,
+                duration: duration,
+                maxSpeed: maxSpeedKmh
+            )
+            newLevel = user.level
+            leveledUp = newLevel != oldLevel
+        }
+
+        // Sauvegarder l'activité
+        let savedActivity = saveActivity()
 
         // Reset après la sauvegarde
         locationManager.reset()
 
-        // Fermer la vue
-        dismiss()
+        // Préparer les données du résumé
+        if let activity = savedActivity, let summary = summary {
+            summaryData = (
+                activity: activity,
+                territories: summary.territoriesCaptured,
+                xp: summary.xpGained,
+                levelUp: leveledUp,
+                newLevel: newLevel ?? 1
+            )
+            showingSummary = true
+        } else {
+            // Pas de données, juste fermer
+            dismiss()
+        }
     }
 
     private func startTimer() {
@@ -262,7 +408,7 @@ struct NewActivityView: View {
         }
     }
 
-    private func saveActivity() {
+    private func saveActivity() -> Activity? {
         // Capturer les valeurs AVANT toute modification
         let distance = locationManager.totalDistance
         let duration = locationManager.elapsedTime
@@ -283,7 +429,7 @@ struct NewActivityView: View {
             )
             modelContext.insert(minimalActivity)
             try? modelContext.save()
-            return
+            return minimalActivity
         }
 
         let detectedType = detectActivityType(speedKmh: avgSpeedKmh)
@@ -306,8 +452,10 @@ struct NewActivityView: View {
         do {
             try modelContext.save()
             print("Activity saved: distance=\(distance)m, duration=\(duration)s, type=\(detectedType), valid=\(activity.isValid)")
+            return activity
         } catch {
             print("Error saving activity: \(error)")
+            return nil
         }
     }
 
@@ -382,5 +530,5 @@ struct StatCard: View {
 
 #Preview {
     NewActivityView()
-        .modelContainer(for: [Activity.self], inMemory: true)
+        .modelContainer(for: [Activity.self, Territory.self, User.self], inMemory: true)
 }
