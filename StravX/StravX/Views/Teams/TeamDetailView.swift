@@ -454,12 +454,36 @@ struct ShareSheet: View {
 
                 Spacer()
 
-                // Share Button
-                Button {
-                    shareTeamCode()
-                } label: {
-                    Label("Partager", systemImage: "square.and.arrow.up.fill")
-                        .font(.headline)
+                // Share Buttons
+                VStack(spacing: 12) {
+                    // WhatsApp Share Button
+                    Button {
+                        ShareHelper.shareTeamToWhatsApp(team: team)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "phone.bubble.left.fill")
+                                .font(.title3)
+                            Text("Partager sur WhatsApp")
+                                .font(.headline)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .cornerRadius(12)
+                    }
+
+                    // Standard Share Button
+                    Button {
+                        shareTeamCode()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.and.arrow.up.fill")
+                                .font(.title3)
+                            Text("Partager autrement")
+                                .font(.headline)
+                        }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -471,6 +495,7 @@ struct ShareSheet: View {
                             )
                         )
                         .cornerRadius(12)
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)

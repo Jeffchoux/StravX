@@ -11,9 +11,18 @@ import SwiftData
 
 @main
 struct StravXApp: App {
+    @State private var deepLinkHandler = DeepLinkHandler()
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(deepLinkHandler)
+                .onOpenURL { url in
+                    let deepLink = deepLinkHandler.handleURL(url)
+                    if deepLink != .none {
+                        deepLinkHandler.activateDeepLink(deepLink)
+                    }
+                }
         }
         .modelContainer(for: [Activity.self, Territory.self, User.self, Team.self, Competition.self])
     }
