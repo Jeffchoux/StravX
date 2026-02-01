@@ -25,8 +25,8 @@ struct MapView: View {
                     if showTerritories, let manager = territoryManager {
                         ForEach(manager.visibleTerritories, id: \.tileID) { territory in
                             MapPolygon(territory.geoTile.polygon)
-                                .foregroundStyle(territory.team.color.opacity(0.3))
-                                .stroke(territory.team.color, lineWidth: territory.isContested ? 3 : 1.5)
+                                .foregroundStyle(territoryColor(for: territory).opacity(0.3))
+                                .stroke(territoryColor(for: territory), lineWidth: territory.isContested ? 3 : 1.5)
                         }
                     }
 
@@ -141,6 +141,17 @@ struct MapView: View {
     private func loadTerritories() {
         guard let location = locationManager.currentLocation else { return }
         territoryManager?.loadTerritoriesAround(location.coordinate, radius: 1500)
+    }
+
+    private func territoryColor(for territory: Territory) -> Color {
+        if territory.isNeutral {
+            return .gray // Territoire neutre
+        } else if let currentUserID = territoryManager?.getUser()?.id.uuidString,
+                  territory.ownerID == currentUserID {
+            return territoryManager?.getUser()?.color ?? .blue // Mes territoires
+        } else {
+            return .red // Territoires ennemis
+        }
     }
 }
 

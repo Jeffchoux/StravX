@@ -23,7 +23,6 @@ final class Territory {
 
     var ownerID: String? // UUID de l'utilisateur propriétaire
     var ownerName: String? // Pseudo affiché
-    var teamColor: String // TeamColor.rawValue
     var capturedAt: Date?
 
     // MARK: - Force et défense
@@ -41,14 +40,13 @@ final class Territory {
 
     // MARK: - Initialisation
 
-    init(tile: GeoTile, ownerID: String? = nil, ownerName: String? = nil, teamColor: TeamColor = .neutral) {
+    init(tile: GeoTile, ownerID: String? = nil, ownerName: String? = nil) {
         self.tileID = tile.tileID
         self.centerLat = tile.centerLat
         self.centerLon = tile.centerLon
         self.zoom = tile.zoom
         self.ownerID = ownerID
         self.ownerName = ownerName
-        self.teamColor = teamColor.rawValue
 
         if ownerID != nil {
             self.capturedAt = Date()
@@ -57,10 +55,6 @@ final class Territory {
     }
 
     // MARK: - Propriétés calculées
-
-    var team: TeamColor {
-        TeamColor(rawValue: teamColor) ?? .neutral
-    }
 
     var isNeutral: Bool {
         ownerID == nil
@@ -106,24 +100,12 @@ final class Territory {
     // MARK: - Actions
 
     /// Capture cette zone par un nouveau propriétaire
-    func capture(by userID: String, userName: String, teamColor: TeamColor) {
+    func capture(by userID: String, userName: String) {
         let wasNeutral = isNeutral
-        _ = self.ownerID // previousOwner pour historique
-
-        // Enregistrer l'événement
-        let event = CaptureEvent(
-            userID: userID,
-            userName: userName,
-            teamColor: teamColor,
-            capturedAt: Date(),
-            previousOwner: self.ownerName
-        )
-        addCaptureEvent(event)
 
         // Mettre à jour la propriété
         self.ownerID = userID
         self.ownerName = userName
-        self.teamColor = teamColor.rawValue
         self.capturedAt = Date()
         self.lastReinforcedAt = Date()
         self.captureCount += 1
@@ -172,7 +154,6 @@ final class Territory {
         if strengthPoints == 0 {
             ownerID = nil
             ownerName = nil
-            teamColor = TeamColor.neutral.rawValue
             capturedAt = nil
             isContested = false
             contestedBy = nil
@@ -191,7 +172,6 @@ final class Territory {
             if strengthPoints == 0 {
                 ownerID = nil
                 ownerName = nil
-                teamColor = TeamColor.neutral.rawValue
                 capturedAt = nil
             }
         }
@@ -243,7 +223,6 @@ extension Territory {
         """
         Territory(\(tileID))
         - Owner: \(ownerName ?? "None")
-        - Team: \(team.rawValue)
         - Strength: \(strengthPoints)/100
         - Contested: \(isContested)
         - Captured: \(captureCount) times
@@ -261,12 +240,7 @@ extension Territory {
         } else if strengthPoints < 30 {
             return "⚠️"
         } else {
-            switch team {
-            case .red: return "🔥"
-            case .blue: return "💧"
-            case .green: return "🌿"
-            case .neutral: return "⚪"
-            }
+            return "📍" // Zone capturée standard
         }
     }
 }

@@ -27,38 +27,34 @@ struct ActivityView: View {
                     }
                 }
 
-                // Bouton flottant toujours visible
+                // Bouton flottant centré
                 VStack {
                     Spacer()
-                    HStack {
-                        Spacer()
 
-                        Button {
-                            showingNewActivity = true
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: "play.fill")
-                                    .font(.title2)
-                                Text("DÉMARRER")
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    colors: [.orange, .red],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .cornerRadius(30)
-                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                    Button {
+                        showingNewActivity = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "play.fill")
+                                .font(.title2)
+                            Text("Lancer")
+                                .font(.headline)
+                                .fontWeight(.bold)
                         }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, activities.isEmpty ? 100 : 30)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 18)
+                        .background(
+                            LinearGradient(
+                                colors: [.green, .mint],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .cornerRadius(30)
+                        .shadow(color: .green.opacity(0.4), radius: 12, x: 0, y: 6)
                     }
+                    .padding(.bottom, activities.isEmpty ? 100 : 30)
                 }
             }
             .navigationTitle("Activités")
@@ -89,15 +85,15 @@ struct ActivityView: View {
                     .font(.title)
                     .fontWeight(.bold)
 
-                Text("Appuyez sur DÉMARRER pour\ncommencer votre première activité")
+                Text("Appuyez sur Lancer pour\ncommencer votre première activité")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
 
                 HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.right")
+                    Image(systemName: "arrow.down")
                         .font(.caption)
-                    Text("Bouton en bas à droite")
+                    Text("Bouton en bas")
                         .font(.caption)
                 }
                 .foregroundColor(.secondary.opacity(0.7))

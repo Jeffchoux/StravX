@@ -16,7 +16,6 @@ struct OnboardingView: View {
 
     @State private var currentPage = 0
     @State private var username = ""
-    @State private var selectedTeam: TeamColor = .blue
 
     var body: some View {
         TabView(selection: $currentPage) {
@@ -26,11 +25,8 @@ struct OnboardingView: View {
             // Page 2: Choix de pseudo
             usernamePage.tag(1)
 
-            // Page 3: Choix d'équipe
-            teamSelectionPage.tag(2)
-
-            // Page 4: Comment jouer
-            howToPlayPage.tag(3)
+            // Page 3: Comment jouer
+            howToPlayPage.tag(2)
         }
         .tabViewStyle(.page)
         .indexViewStyle(.page(backgroundDisplayMode: .always))
@@ -128,57 +124,6 @@ struct OnboardingView: View {
         .padding()
     }
 
-    // MARK: - Team Selection Page
-
-    private var teamSelectionPage: some View {
-        VStack(spacing: 32) {
-            Spacer()
-
-            VStack(spacing: 16) {
-                Text("Rejoins une équipe")
-                    .font(.title)
-                    .fontWeight(.bold)
-
-                Text("Choisis ta couleur et domine la ville !")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-
-            VStack(spacing: 16) {
-                TeamCard(team: .red, isSelected: selectedTeam == .red) {
-                    selectedTeam = .red
-                }
-
-                TeamCard(team: .blue, isSelected: selectedTeam == .blue) {
-                    selectedTeam = .blue
-                }
-
-                TeamCard(team: .green, isSelected: selectedTeam == .green) {
-                    selectedTeam = .green
-                }
-            }
-            .padding(.horizontal, 40)
-
-            Spacer()
-
-            Button {
-                withAnimation {
-                    currentPage = 3
-                }
-            } label: {
-                Text("Suivant")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-            }
-            .padding(.horizontal, 40)
-        }
-        .padding()
-    }
-
     // MARK: - How To Play Page
 
     private var howToPlayPage: some View {
@@ -228,8 +173,7 @@ struct OnboardingView: View {
     private func createUserAndFinish() {
         // Créer l'utilisateur
         let user = User(
-            username: username.isEmpty ? "Joueur" : username,
-            teamColor: selectedTeam
+            username: username.isEmpty ? "Joueur" : username
         )
 
         modelContext.insert(user)
@@ -243,47 +187,6 @@ struct OnboardingView: View {
 }
 
 // MARK: - Supporting Views
-
-struct TeamCard: View {
-    let team: TeamColor
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Circle()
-                    .fill(team.color)
-                    .frame(width: 50, height: 50)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(team.displayName)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-
-                    Text("Rejoindre l'équipe")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(team.color)
-                }
-            }
-            .padding()
-            .background(isSelected ? team.color.opacity(0.1) : Color(.systemGray6))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? team.color : Color.clear, lineWidth: 2)
-            )
-        }
-    }
-}
 
 struct HowToItem: View {
     let icon: String

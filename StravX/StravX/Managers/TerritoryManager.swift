@@ -49,7 +49,7 @@ class TerritoryManager {
             print("🟢 User loaded: \(existingUser.username)")
         } else {
             // Créer un nouvel utilisateur
-            let newUser = User(username: "Player", teamColor: .blue) // On pourra changer ça après
+            let newUser = User(username: "Player")
             modelContext.insert(newUser)
             try? modelContext.save()
             currentUser = newUser
@@ -63,11 +63,6 @@ class TerritoryManager {
 
     func updateUsername(_ newName: String) {
         currentUser?.username = newName
-        try? modelContext.save()
-    }
-
-    func changeTeam(_ team: TeamColor) {
-        currentUser?.teamColor = team.rawValue
         try? modelContext.save()
     }
 
@@ -191,8 +186,7 @@ class TerritoryManager {
 
         territory.capture(
             by: user.id.uuidString,
-            userName: user.username,
-            teamColor: user.team
+            userName: user.username
         )
 
         user.captureTerritory(xpGained: xpGained)

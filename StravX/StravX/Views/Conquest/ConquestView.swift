@@ -99,8 +99,8 @@ struct ConquestView: View {
             Map(position: $position, selection: $selectedTerritory) {
                 ForEach(ownedTerritories, id: \.tileID) { territory in
                     MapPolygon(territory.geoTile.polygon)
-                        .foregroundStyle(territory.team.color.opacity(0.4))
-                        .stroke(territory.isContested ? Color.red : territory.team.color, lineWidth: 2)
+                        .foregroundStyle(Color.blue.opacity(0.4))
+                        .stroke(territory.isContested ? Color.red : Color.blue, lineWidth: 2)
                         .tag(territory)
                 }
 
@@ -222,7 +222,7 @@ struct TerritoryCard: View {
             // Icône de statut
             ZStack {
                 Circle()
-                    .fill(territory.team.color.opacity(0.2))
+                    .fill(Color.blue.opacity(0.2))
                     .frame(width: 50, height: 50)
 
                 Text(territory.statusEmoji)

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftUI
 import SwiftData
 
 @Model
@@ -17,10 +18,10 @@ final class User {
     var username: String
     var createdAt: Date
 
-    // MARK: - Équipe
+    // MARK: - Teams (compétitions entre amis)
 
-    var teamColor: String // TeamColor.rawValue
-    var teamID: String? // ID de l'équipe (pour plus tard)
+    var teamIDs: Data? // JSON encodé de [String] - IDs des teams privées
+    var personalColor: String = "blue" // Couleur personnelle pour l'affichage (blue, green, red, etc.)
 
     // MARK: - Progression
 
@@ -62,10 +63,10 @@ final class User {
 
     // MARK: - Initialisation
 
-    init(username: String, teamColor: TeamColor = .neutral) {
+    init(username: String, personalColor: String = "blue") {
         self.id = UUID()
         self.username = username
-        self.teamColor = teamColor.rawValue
+        self.personalColor = personalColor
         self.createdAt = Date()
         self.lastActivityDate = Date()
 
@@ -79,8 +80,27 @@ final class User {
 
     // MARK: - Propriétés calculées
 
-    var team: TeamColor {
-        TeamColor(rawValue: teamColor) ?? .neutral
+    var color: Color {
+        // Retourne la couleur personnelle de l'utilisateur pour l'affichage
+        switch personalColor {
+        case "red": return .red
+        case "green": return .green
+        case "blue": return .blue
+        case "orange": return .orange
+        case "purple": return .purple
+        case "pink": return .pink
+        default: return .blue
+        }
+    }
+
+    var teamList: [String] {
+        get {
+            guard let data = teamIDs else { return [] }
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        set {
+            teamIDs = try? JSONEncoder().encode(newValue)
+        }
     }
 
     var badges: [Badge] {

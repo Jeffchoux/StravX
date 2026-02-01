@@ -76,7 +76,7 @@ struct EnhancedProfileView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [user?.team.color ?? .blue, (user?.team.color ?? .blue).opacity(0.6)],
+                            colors: [user?.color ?? .blue, (user?.color ?? .blue).opacity(0.6)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -104,16 +104,6 @@ struct EnhancedProfileView: View {
                 Text(user?.rankTitle ?? "Explorateur")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-
-                // Team badge
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(user?.team.color ?? .gray)
-                        .frame(width: 12, height: 12)
-                    Text(user?.team.displayName ?? "Neutre")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
             }
         }
         .padding()
@@ -139,7 +129,7 @@ struct EnhancedProfileView: View {
             }
 
             ProgressView(value: user?.levelProgress.progress ?? 0, total: 1.0)
-                .tint(user?.team.color ?? .blue)
+                .tint(user?.color ?? .blue)
 
             Text("Total: \(user?.totalXP ?? 0) XP")
                 .font(.caption2)
