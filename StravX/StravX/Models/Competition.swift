@@ -128,7 +128,7 @@ final class Competition {
         }
 
         // Le créateur est automatiquement participant
-        var participants = [creatorID]
+        let participants = [creatorID]
         self.participantIDsData = try? JSONEncoder().encode(participants)
     }
 

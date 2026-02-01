@@ -102,6 +102,7 @@ final class Territory {
     /// Capture cette zone par un nouveau propriétaire
     func capture(by userID: String, userName: String) {
         let wasNeutral = isNeutral
+        let previousOwner = ownerID
 
         // Mettre à jour la propriété
         self.ownerID = userID
@@ -121,6 +122,9 @@ final class Territory {
         // Réinitialiser le statut de contestation
         self.isContested = false
         self.contestedBy = nil
+
+        // TODO: Réactiver l'historique quand CaptureEvent sera adapté au système de teams privées
+        // Pour l'instant on utilise captureCount et lastCapturedBy
     }
 
     /// Renforce cette zone (le propriétaire repasse dedans)

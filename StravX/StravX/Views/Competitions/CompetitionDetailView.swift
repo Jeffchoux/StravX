@@ -321,8 +321,7 @@ struct CompetitionDetailView: View {
         let tempTeam = Team(name: "temp", creatorID: competition.creatorID)
 
         // Set the participants
-        var participants = competition.participantIDs
-        tempTeam.memberIDs = participants
+        tempTeam.memberIDs = competition.participantIDs
 
         leaderboard = teamManager.getTeamLeaderboard(tempTeam, metric: competition.metric)
     }

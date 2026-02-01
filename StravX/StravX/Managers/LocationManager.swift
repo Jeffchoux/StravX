@@ -51,17 +51,19 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 10 // Mise à jour tous les 10 mètres
-        locationManager.allowsBackgroundLocationUpdates = true // Permet le tracking en arrière-plan
-        locationManager.pausesLocationUpdatesAutomatically = false // Empêche la pause automatique
+
+        // 🔋 OPTIMISATION BATTERIE : Précision économique par défaut
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        locationManager.distanceFilter = 50 // Mise à jour tous les 50 mètres (économise la batterie)
+
+        // 🔋 Background updates DÉSACTIVÉS par défaut (activé seulement pendant une activité)
+        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.pausesLocationUpdatesAutomatically = true // Économie d'énergie
+
         authorizationStatus = locationManager.authorizationStatus
 
-        print("🔵 LocationManager initialisé")
+        print("🔵 LocationManager initialisé (mode économie d'énergie)")
         print("🔵 Status actuel: \(authorizationStatus.rawValue)")
-        print("🔵 isNotDetermined: \(isNotDetermined)")
-        print("🔵 isAuthorized: \(isAuthorized)")
-        print("🔵 isDenied: \(isDenied)")
     }
 
     // MARK: - Authorization
@@ -111,9 +113,11 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
         switch authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            locationManager.startUpdatingLocation()
+            // 🔋 OPTIMISATION : NE PAS démarrer automatiquement le GPS
+            // Le GPS sera activé uniquement quand l'utilisateur lance une activité
+            print("✅ Autorisation accordée (GPS ne démarre pas automatiquement pour économiser la batterie)")
         case .denied, .restricted:
-            print("Location access denied")
+            print("❌ Accès localisation refusé")
         case .notDetermined:
             break
         @unknown default:
@@ -168,26 +172,43 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         routeCoordinates = []
         lastLocation = nil
 
-        // Activer le mode arrière-plan pour le tracking sportif
+        // 🔋 OPTIMISATION : Activer haute précision SEULEMENT pendant l'activité
+        locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation // Meilleure précision pour sport
+        locationManager.distanceFilter = 10 // Mise à jour tous les 10 mètres
+        locationManager.allowsBackgroundLocationUpdates = true // Permet le tracking en arrière-plan
+        locationManager.pausesLocationUpdatesAutomatically = false // Empêche la pause automatique
         locationManager.showsBackgroundLocationIndicator = true
+
         locationManager.startUpdatingLocation()
+        print("📍 Tracking démarré (haute précision activée)")
     }
 
     func stopTracking() {
         isTracking = false
         trackingStartTime = nil
+
+        // 🔋 OPTIMISATION : Revenir en mode économie d'énergie après l'activité
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        locationManager.distanceFilter = 50
+        locationManager.allowsBackgroundLocationUpdates = false
+        locationManager.pausesLocationUpdatesAutomatically = true
+        locationManager.showsBackgroundLocationIndicator = false
+
         locationManager.stopUpdatingLocation()
+        print("📍 Tracking arrêté (mode économie activé)")
     }
 
     func pauseTracking() {
         isTracking = false
         locationManager.stopUpdatingLocation()
+        print("⏸️ Tracking en pause")
     }
 
     func resumeTracking() {
         guard trackingStartTime != nil else { return }
         isTracking = true
         locationManager.startUpdatingLocation()
+        print("▶️ Tracking repris")
     }
 
     private func addLocationToRoute(_ location: CLLocation) {

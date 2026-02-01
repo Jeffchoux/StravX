@@ -44,7 +44,7 @@ final class Team {
         self.createdAt = Date()
 
         // Le créateur est automatiquement membre
-        var members = [creatorID]
+        let members = [creatorID]
         self.memberIDsData = try? JSONEncoder().encode(members)
     }
 
