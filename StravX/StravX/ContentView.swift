@@ -32,11 +32,17 @@ struct ContentView: View {
                 }
                 .tag(2)
 
+            TeamsView()
+                .tabItem {
+                    Label("Teams", systemImage: "person.3.fill")
+                }
+                .tag(3)
+
             EnhancedProfileView()
                 .tabItem {
                     Label("Profil", systemImage: "person.circle")
                 }
-                .tag(3)
+                .tag(4)
         }
         .accentColor(.orange)
     }

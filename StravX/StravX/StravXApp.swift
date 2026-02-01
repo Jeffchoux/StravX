@@ -15,7 +15,7 @@ struct StravXApp: App {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: [Activity.self, Territory.self, User.self])
+        .modelContainer(for: [Activity.self, Territory.self, User.self, Team.self, Competition.self])
     }
 }
 
