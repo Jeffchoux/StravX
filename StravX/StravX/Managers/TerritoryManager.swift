@@ -17,6 +17,7 @@ class TerritoryManager {
 
     private var modelContext: ModelContext
     private var currentUser: User?
+    private var notificationManager: NotificationManager?
 
     // Cache des territoires visibles
     var visibleTerritories: [Territory] = []
@@ -36,6 +37,8 @@ class TerritoryManager {
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         loadOrCreateUser()
+        notificationManager = NotificationManager(modelContext: modelContext)
+        notificationManager?.registerNotificationCategories()
     }
 
     // MARK: - User Management
@@ -210,12 +213,22 @@ class TerritoryManager {
     }
 
     private func attackTerritory(_ territory: Territory, by user: User) {
+        let oldOwnerID = territory.ownerID
+        let wasContested = territory.isContested
+
         territory.attack(by: user.id.uuidString)
 
-        // Si la zone est maintenant neutre, notifier l'ancien propriétaire (plus tard avec backend)
-        if territory.isNeutral {
-            // TODO: Push notification à l'ancien propriétaire
-            print("⚔️ Territory captured from enemy!")
+        // Notifications
+        if let ownerID = oldOwnerID, ownerID != user.id.uuidString {
+            // Si le territoire est maintenant neutre, c'est une perte
+            if territory.isNeutral {
+                notificationManager?.notifyTerritoryLost(territory: territory, capturedBy: user.username)
+                print("⚔️ Territory lost notification sent to \(ownerID)")
+            } else if !wasContested {
+                // Première attaque - notifier que le territoire est attaqué
+                notificationManager?.notifyTerritoryAttacked(territory: territory, attackerName: user.username)
+                print("⚔️ Territory attack notification sent to \(ownerID)")
+            }
         }
     }
 
