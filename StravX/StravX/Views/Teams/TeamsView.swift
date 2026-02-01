@@ -124,6 +124,16 @@ struct TeamsView: View {
                         .background(Color.blue.opacity(0.1))
                         .cornerRadius(12)
                 }
+
+                NavigationLink(destination: CompetitionsView()) {
+                    Label("Voir les compétitions", systemImage: "trophy.fill")
+                        .font(.headline)
+                        .foregroundColor(.orange)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(12)
+                }
             }
             .padding(.horizontal, 40)
         }
@@ -134,6 +144,39 @@ struct TeamsView: View {
     private func teamListView(teamManager: TeamManager) -> some View {
         ScrollView {
             VStack(spacing: 16) {
+                // Competitions Button
+                NavigationLink(destination: CompetitionsView()) {
+                    HStack {
+                        Image(systemName: "trophy.fill")
+                            .font(.title2)
+                            .foregroundColor(.orange)
+                            .frame(width: 50, height: 50)
+                            .background(Color.orange.opacity(0.1))
+                            .cornerRadius(12)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Compétitions")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+
+                            Text("Défiez vos amis et votre team !")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+                }
+                .buttonStyle(.plain)
+
+                // Teams List
                 ForEach(teamManager.myTeams, id: \.id) { team in
                     NavigationLink(destination: TeamDetailView(team: team, teamManager: teamManager)) {
                         TeamCard(team: team, teamManager: teamManager)
