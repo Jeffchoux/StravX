@@ -75,7 +75,7 @@ struct ContentView: View {
             showingDeepLinkAlert = true
             selectedTab = 3 // Switch to Teams tab
 
-        case .joinCompetition(let id):
+        case .joinCompetition(_):
             deepLinkMessage = "Voulez-vous rejoindre la compétition ?"
             showingDeepLinkAlert = true
             selectedTab = 3 // Switch to Teams tab
@@ -97,7 +97,7 @@ struct ContentView: View {
                 print("❌ Failed to join team: \(result.message)")
             }
 
-        case .joinCompetition(let id):
+        case .joinCompetition(_):
             // Handle competition join
             print("📲 Competition join not yet implemented")
 

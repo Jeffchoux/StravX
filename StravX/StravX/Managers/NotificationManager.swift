@@ -281,11 +281,21 @@ class NotificationManager {
     func clearAllNotifications() {
         center.removeAllPendingNotificationRequests()
         center.removeAllDeliveredNotifications()
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        // Clear badge using iOS 17+ API
+        if #available(iOS 17.0, *) {
+            center.setBadgeCount(0)
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
 
     func clearBadge() {
-        UIApplication.shared.applicationIconBadgeNumber = 0
+        // Clear badge using iOS 17+ API
+        if #available(iOS 17.0, *) {
+            center.setBadgeCount(0)
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
 }
 

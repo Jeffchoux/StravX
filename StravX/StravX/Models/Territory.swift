@@ -102,7 +102,7 @@ final class Territory {
     /// Capture cette zone par un nouveau propriétaire
     func capture(by userID: String, userName: String) {
         let wasNeutral = isNeutral
-        let previousOwner = ownerID
+        _ = ownerID // Ancien propriétaire (pour historique futur)
 
         // Mettre à jour la propriété
         self.ownerID = userID

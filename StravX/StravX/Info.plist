@@ -34,6 +34,8 @@
 	</array>
 	<key>NSMotionUsageDescription</key>
 	<string>StravX utilise les données de mouvement pour améliorer la précision du suivi d'activité.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>StravX vous envoie des notifications pour vous alerter quand vos territoires sont attaqués, quand vous débloquez des badges, et pour vos rappels d'activité quotidienne.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UILaunchScreen</key>
