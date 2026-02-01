@@ -59,7 +59,10 @@ final class User {
     // MARK: - Social
 
     var friendsData: Data? // JSON encodé de [String] (UUIDs des amis)
+    var followingIDsData: Data? // JSON encodé de [String] (UUIDs des personnes suivies)
+    var followerIDsData: Data? // JSON encodé de [String] (UUIDs des followers)
     var publicProfile: Bool = true
+    var allowFollowers: Bool = true // Permet aux autres de suivre ses exploits
 
     // MARK: - Initialisation
 
@@ -141,6 +144,34 @@ final class User {
         set {
             friendsData = try? JSONEncoder().encode(newValue)
         }
+    }
+
+    var followingIDs: [String] {
+        get {
+            guard let data = followingIDsData else { return [] }
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        set {
+            followingIDsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    var followerIDs: [String] {
+        get {
+            guard let data = followerIDsData else { return [] }
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        set {
+            followerIDsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    var followingCount: Int {
+        followingIDs.count
+    }
+
+    var followerCount: Int {
+        followerIDs.count
     }
 
     var levelProgress: (currentLevelXP: Int, neededForNext: Int, progress: Double) {

@@ -13,6 +13,7 @@ import CoreLocation
 @Model
 final class Activity {
     var id: UUID
+    var userID: UUID // ID de l'utilisateur qui a fait l'activité
     var date: Date
     var distance: Double // en mètres
     var duration: TimeInterval // en secondes
@@ -23,8 +24,9 @@ final class Activity {
     var validationMessage: String? = nil // Message d'invalidation si triche
     var routePoints: Data? // Encoded array of CLLocationCoordinate2D
 
-    init(distance: Double, duration: TimeInterval, activityType: String = "running", maxSpeed: Double = 0, routePoints: Data? = nil) {
+    init(userID: UUID = UUID(), distance: Double, duration: TimeInterval, activityType: String = "running", maxSpeed: Double = 0, routePoints: Data? = nil) {
         self.id = UUID()
+        self.userID = userID
         self.date = Date()
         self.distance = distance
         self.duration = duration
@@ -144,4 +146,42 @@ final class Activity {
             return "Activité"
         }
     }
+
+    // Propriétés pour l'affichage dans FriendsView
+    var startDate: Date {
+        date
+    }
+
+    var type: String {
+        activityType
+    }
+
+    var typeIcon: String {
+        activityTypeIcon
+    }
+
+    var typeColor: Color {
+        switch activityType {
+        case "running":
+            return .blue
+        case "cycling":
+            return .green
+        case "walking":
+            return .orange
+        case "driving":
+            return .red
+        default:
+            return .gray
+        }
+    }
+
+    var territoriesCaptured: Int {
+        // TODO: Implémenter le tracking des territoires capturés par activité
+        // Pour l'instant on retourne 0
+        0
+    }
 }
+
+// Extension pour SwiftUI Color
+import SwiftUI
+

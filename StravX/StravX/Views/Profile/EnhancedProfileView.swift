@@ -30,6 +30,9 @@ struct EnhancedProfileView: View {
                     // Stats rapides
                     quickStats
 
+                    // Social / Friends
+                    socialSection
+
                     // Badges (3 derniers)
                     recentBadges
 
@@ -174,6 +177,68 @@ struct EnhancedProfileView: View {
                     value: "\(user?.totalActivities ?? 0)",
                     color: .purple
                 )
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Social Section
+
+    private var socialSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Social")
+                .font(.headline)
+                .padding(.horizontal)
+
+            NavigationLink {
+                FriendsView()
+            } label: {
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.2))
+                            .frame(width: 50, height: 50)
+
+                        Image(systemName: "person.2.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Amis")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+
+                        HStack(spacing: 16) {
+                            HStack(spacing: 4) {
+                                Text("\(user?.followingCount ?? 0)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                Text("Following")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            HStack(spacing: 4) {
+                                Text("\(user?.followerCount ?? 0)")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                Text("Followers")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
             }
             .padding(.horizontal)
         }
