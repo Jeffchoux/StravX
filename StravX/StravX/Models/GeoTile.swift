@@ -21,16 +21,16 @@ struct GeoTile: Hashable, Codable {
     // MARK: - Configuration
 
     /// Taille d'une tile en degrés selon le niveau de zoom
-    /// Zoom 15 ≈ 100m x 100m (parfait pour une ville)
+    /// Zoom 17 ≈ 68m x 68m (OPTIMAL pour running/cycling)
     static let tileSizes: [Int: Double] = [
         13: 0.01,    // ~1.1 km
         14: 0.005,   // ~550 m
-        15: 0.0025,  // ~275 m (OPTIMAL pour StravX)
+        15: 0.0025,  // ~275 m
         16: 0.00125, // ~137 m
-        17: 0.000625 // ~68 m
+        17: 0.000625 // ~68 m (OPTIMAL pour StravX - capture rapide)
     ]
 
-    static let defaultZoom = 15 // Niveau optimal pour le jeu
+    static let defaultZoom = 17 // Niveau optimal pour le jeu (zones plus petites = plus de captures)
 
     // MARK: - Création
 
