@@ -137,6 +137,8 @@ struct NewActivityView: View {
                                 .clipShape(Circle())
                                 .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
+                            .accessibilityLabel("Pause tracking")
+                            .accessibilityHint("Pauses the current activity tracking")
                         } else if locationManager.trackingStartTime != nil {
                             // Bouton Resume principal
                             Button {
@@ -155,6 +157,8 @@ struct NewActivityView: View {
                                 .clipShape(Circle())
                                 .shadow(color: .green.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
+                            .accessibilityLabel("Resume tracking")
+                            .accessibilityHint("Resumes the paused activity tracking")
                         } else {
                             // Bouton Start principal
                             Button {
@@ -185,6 +189,8 @@ struct NewActivityView: View {
                                 .shadow(color: locationManager.isAuthorized ? .green.opacity(0.3) : .gray.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
                             .disabled(!locationManager.isAuthorized)
+                            .accessibilityLabel("Start activity tracking")
+                            .accessibilityHint("Starts tracking your activity with GPS")
                         }
 
                         // Bouton Stop secondaire (plus petit)
@@ -205,6 +211,8 @@ struct NewActivityView: View {
                                 .background(Color.red)
                                 .cornerRadius(25)
                             }
+                            .accessibilityLabel("Stop and save activity")
+                            .accessibilityHint("Stops tracking and saves your activity")
                             .padding(.top, 10)
                         }
                     }
@@ -305,7 +313,7 @@ struct NewActivityView: View {
         xpGained = 0
 
         // Timer pour vérifier la position toutes les 3 secondes
-        territoryCheckTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+        territoryCheckTimer = Timer.scheduledTimer(withTimeInterval: AppConstants.Location.territoryCheckInterval, repeats: true) { _ in
             checkTerritoryPassage()
         }
     }
@@ -345,7 +353,7 @@ struct NewActivityView: View {
         }
 
         // Cacher après 2 secondes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + AppConstants.UI.notificationDuration) {
             withAnimation {
                 showingNotification = nil
             }
@@ -418,7 +426,7 @@ struct NewActivityView: View {
 
         // Vérifier qu'on a bien des données à sauvegarder
         guard duration > 0 else {
-            print("Warning: No activity duration to save")
+            AppLogger.warning("No activity duration to save, creating minimal activity", category: AppLogger.activity)
             // Créer quand même une activité minimale pour éviter les crashes
             let minimalActivity = Activity(
                 distance: 0,
@@ -444,17 +452,17 @@ struct NewActivityView: View {
 
         // Avertir si l'activité est suspecte
         if !activity.isValid {
-            print("⚠️ Activité suspecte détectée: \(activity.validationMessage ?? "Raison inconnue")")
+            AppLogger.warning("\(AppLogger.warn) Suspicious activity detected: \(activity.validationMessage ?? "Unknown reason")", category: AppLogger.activity)
         }
 
         modelContext.insert(activity)
 
         do {
             try modelContext.save()
-            print("Activity saved: distance=\(distance)m, duration=\(duration)s, type=\(detectedType), valid=\(activity.isValid)")
+            AppLogger.info("\(AppLogger.success) Activity saved: \(String(format: "%.1f", distance/1000))km, \(Int(duration))s, type=\(detectedType), valid=\(activity.isValid)", category: AppLogger.activity)
             return activity
         } catch {
-            print("Error saving activity: \(error)")
+            AppLogger.error("\(AppLogger.failure) Error saving activity", error: error, category: AppLogger.activity)
             return nil
         }
     }
@@ -462,13 +470,13 @@ struct NewActivityView: View {
     private func detectActivityType(speedKmh: Double) -> String {
         // Détection automatique du type d'activité basée sur la vitesse moyenne
         switch speedKmh {
-        case 0..<6:
-            return "walking"  // Marche: moins de 6 km/h
-        case 6..<15:
-            return "running"  // Course: 6-15 km/h
-        case 15..<35:
-            return "cycling"  // Vélo: 15-35 km/h
-        case 35...:
+        case 0..<AppConstants.SpeedThresholds.walkingMax:
+            return "walking"
+        case AppConstants.SpeedThresholds.walkingMax..<AppConstants.SpeedThresholds.runningMax:
+            return "running"
+        case AppConstants.SpeedThresholds.runningMax..<AppConstants.SpeedThresholds.cyclingMax:
+            return "cycling"
+        case AppConstants.SpeedThresholds.cyclingMax...:
             return "driving"  // Véhicule motorisé (sera marqué comme invalide)
         default:
             return "running"
@@ -497,9 +505,9 @@ struct StatCard: View {
     var body: some View {
         HStack(spacing: 20) {
             Image(systemName: icon)
-                .font(.system(size: 30))
+                .font(.system(size: AppConstants.UI.statCardIconSize))
                 .foregroundColor(.blue)
-                .frame(width: 60, height: 60)
+                .frame(width: AppConstants.UI.statCardIconFrame, height: AppConstants.UI.statCardIconFrame)
                 .background(Color.white.opacity(0.9))
                 .clipShape(Circle())
 

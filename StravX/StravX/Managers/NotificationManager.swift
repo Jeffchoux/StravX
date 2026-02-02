@@ -35,7 +35,7 @@ class NotificationManager {
             checkAuthorizationStatus()
             return granted
         } catch {
-            print("❌ Error requesting notification authorization: \(error)")
+            AppLogger.error("\(AppLogger.failure) Error requesting notification authorization", error: error, category: AppLogger.notification)
             return false
         }
     }
@@ -83,9 +83,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling notification: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling notification", error: error, category: AppLogger.notification)
             } else {
-                print("✅ Territory attack notification scheduled")
+                AppLogger.info("\(AppLogger.success) Territory attack notification scheduled", category: AppLogger.notification)
             }
         }
     }
@@ -115,9 +115,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling notification: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling notification", error: error, category: AppLogger.notification)
             } else {
-                print("✅ Territory lost notification scheduled")
+                AppLogger.info("\(AppLogger.success) Territory lost notification scheduled", category: AppLogger.notification)
             }
         }
     }
@@ -146,9 +146,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling notification: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling notification", error: error, category: AppLogger.notification)
             } else {
-                print("✅ Territory weak notification scheduled")
+                AppLogger.info("\(AppLogger.success) Territory weak notification scheduled", category: AppLogger.notification)
             }
         }
     }
@@ -174,9 +174,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling notification: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling notification", error: error, category: AppLogger.notification)
             } else {
-                print("✅ Badge unlock notification scheduled")
+                AppLogger.info("\(AppLogger.success) Badge unlock notification scheduled", category: AppLogger.notification)
             }
         }
     }
@@ -200,9 +200,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling notification: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling notification", error: error, category: AppLogger.notification)
             } else {
-                print("✅ Level up notification scheduled")
+                AppLogger.info("\(AppLogger.success) Level up notification scheduled", category: AppLogger.notification)
             }
         }
     }
@@ -228,9 +228,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling notification: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling notification", error: error, category: AppLogger.notification)
             } else {
-                print("✅ New follower notification scheduled")
+                AppLogger.info("\(AppLogger.success) New follower notification scheduled", category: AppLogger.notification)
             }
         }
     }
@@ -260,9 +260,9 @@ class NotificationManager {
 
         center.add(request) { error in
             if let error = error {
-                print("❌ Error scheduling daily reminder: \(error)")
+                AppLogger.error("\(AppLogger.failure) Error scheduling daily reminder", error: error, category: AppLogger.notification)
             } else {
-                print("✅ Daily reminder scheduled for \(hour):\(minute)")
+                AppLogger.info("\(AppLogger.success) Daily reminder scheduled for \(hour):\(minute)", category: AppLogger.notification)
             }
         }
     }
@@ -281,21 +281,13 @@ class NotificationManager {
     func clearAllNotifications() {
         center.removeAllPendingNotificationRequests()
         center.removeAllDeliveredNotifications()
-        // Clear badge using iOS 17+ API
-        if #available(iOS 17.0, *) {
-            center.setBadgeCount(0)
-        } else {
-            UIApplication.shared.applicationIconBadgeNumber = 0
-        }
+        // Clear badge (iOS 17+ deployment target)
+        center.setBadgeCount(0)
     }
 
     func clearBadge() {
-        // Clear badge using iOS 17+ API
-        if #available(iOS 17.0, *) {
-            center.setBadgeCount(0)
-        } else {
-            UIApplication.shared.applicationIconBadgeNumber = 0
-        }
+        // Clear badge (iOS 17+ deployment target)
+        center.setBadgeCount(0)
     }
 }
 

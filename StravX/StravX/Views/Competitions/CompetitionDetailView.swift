@@ -18,6 +18,7 @@ struct CompetitionDetailView: View {
     @State private var leaderboard: [LeaderboardEntry] = []
     @State private var showingJoinAlert = false
     @State private var showingLeaveAlert = false
+    @State private var showingShareSheet = false
     @State private var refreshTrigger = false
 
     private var isParticipant: Bool {
@@ -36,6 +37,11 @@ struct CompetitionDetailView: View {
                 // Header Card
                 headerCard
 
+                // Code & Share Section
+                if isCreator || isParticipant {
+                    codeShareSection
+                }
+
                 // Leaderboard
                 leaderboardSection
 
@@ -48,6 +54,9 @@ struct CompetitionDetailView: View {
         }
         .navigationTitle(competition.name)
         .navigationBarTitleDisplayMode(.large)
+        .sheet(isPresented: $showingShareSheet) {
+            CompetitionShareSheet(items: [shareText, shareURL])
+        }
         .onAppear {
             loadLeaderboard()
         }
@@ -70,6 +79,100 @@ struct CompetitionDetailView: View {
         } message: {
             Text("Êtes-vous sûr de vouloir quitter cette compétition ?")
         }
+    }
+
+    // MARK: - Share Properties
+
+    private var shareText: String {
+        """
+        🏆 Rejoins ma compétition StravX !
+
+        \(competition.name)
+        Code: \(competition.code)
+
+        Type: \(competition.type.displayName)
+        Métrique: \(competition.metric.displayName)
+        \(competition.daysRemaining != nil ? "Durée: \(competition.daysRemaining!) jours restants" : "Durée illimitée")
+
+        Télécharge StravX et utilise le code pour me rejoindre !
+        """
+    }
+
+    private var shareURL: URL {
+        URL(string: "stravx://competition/\(competition.code)")!
+    }
+
+    // MARK: - Code & Share Section
+
+    private var codeShareSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Code de la compétition")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 12) {
+                        Image(systemName: "number.circle.fill")
+                            .foregroundColor(.orange)
+                            .font(.title3)
+
+                        Text(competition.code)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                    }
+                }
+
+                Spacer()
+
+                Button {
+                    UIPasteboard.general.string = competition.code
+                } label: {
+                    Image(systemName: "doc.on.doc.fill")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Divider()
+
+            // Share Buttons
+            HStack(spacing: 12) {
+                // WhatsApp
+                Button {
+                    shareViaWhatsApp()
+                } label: {
+                    Label("WhatsApp", systemImage: "message.fill")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .cornerRadius(12)
+                }
+
+                // Plus d'options
+                Button {
+                    showingShareSheet = true
+                } label: {
+                    Label("Partager", systemImage: "square.and.arrow.up.fill")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Header Card
@@ -344,6 +447,31 @@ struct CompetitionDetailView: View {
             dismiss()
         }
     }
+
+    private func shareViaWhatsApp() {
+        let message = shareText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "whatsapp://send?text=\(message)") {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            } else {
+                // WhatsApp not installed, fallback to share sheet
+                showingShareSheet = true
+            }
+        }
+    }
+}
+
+// MARK: - Competition Share Sheet
+
+struct CompetitionShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Competition Leaderboard Row

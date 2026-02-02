@@ -37,17 +37,23 @@ struct ContentView: View {
                 }
                 .tag(2)
 
+            FriendsView()
+                .tabItem {
+                    Label("Amis", systemImage: "person.2.fill")
+                }
+                .tag(3)
+
             TeamsView()
                 .tabItem {
                     Label("Teams", systemImage: "person.3.fill")
                 }
-                .tag(3)
+                .tag(4)
 
             EnhancedProfileView()
                 .tabItem {
                     Label("Profil", systemImage: "person.circle")
                 }
-                .tag(4)
+                .tag(5)
         }
         .accentColor(.orange)
         .onChange(of: deepLinkHandler.activeDeepLink) { _, newValue in
@@ -73,12 +79,12 @@ struct ContentView: View {
             teamCodeToJoin = code
             deepLinkMessage = "Voulez-vous rejoindre la team avec le code \(code) ?"
             showingDeepLinkAlert = true
-            selectedTab = 3 // Switch to Teams tab
+            selectedTab = 4 // Switch to Teams tab
 
         case .joinCompetition(_):
             deepLinkMessage = "Voulez-vous rejoindre la compétition ?"
             showingDeepLinkAlert = true
-            selectedTab = 3 // Switch to Teams tab
+            selectedTab = 4 // Switch to Teams tab
 
         case .none:
             break
@@ -92,14 +98,14 @@ struct ContentView: View {
         case .joinTeam(let code):
             let result = teamManager.joinTeam(code: code)
             if result.success {
-                print("✅ Team joined via deep link")
+                AppLogger.info("\(AppLogger.success) Team joined via deep link", category: AppLogger.team)
             } else {
-                print("❌ Failed to join team: \(result.message)")
+                AppLogger.warning("\(AppLogger.failure) Failed to join team: \(result.message)", category: AppLogger.team)
             }
 
         case .joinCompetition(_):
             // Handle competition join
-            print("📲 Competition join not yet implemented")
+            AppLogger.info("Competition join not yet implemented", category: AppLogger.ui)
 
         case .none:
             break

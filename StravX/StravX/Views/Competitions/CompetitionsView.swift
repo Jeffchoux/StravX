@@ -13,6 +13,7 @@ struct CompetitionsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var teamManager: TeamManager?
     @State private var showingCreateCompetition = false
+    @State private var showingJoinCompetition = false
     @State private var selectedFilter: CompetitionFilter = .active
 
     enum CompetitionFilter: String, CaseIterable {
@@ -50,8 +51,18 @@ struct CompetitionsView: View {
             .navigationTitle("Compétitions")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingCreateCompetition = true
+                    Menu {
+                        Button {
+                            showingCreateCompetition = true
+                        } label: {
+                            Label("Créer une compétition", systemImage: "plus.circle.fill")
+                        }
+
+                        Button {
+                            showingJoinCompetition = true
+                        } label: {
+                            Label("Rejoindre avec un code", systemImage: "number.circle.fill")
+                        }
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
@@ -61,6 +72,11 @@ struct CompetitionsView: View {
             .sheet(isPresented: $showingCreateCompetition) {
                 if let teamManager = teamManager {
                     CreateCompetitionView(teamManager: teamManager)
+                }
+            }
+            .sheet(isPresented: $showingJoinCompetition) {
+                if let teamManager = teamManager {
+                    JoinCompetitionView(teamManager: teamManager)
                 }
             }
             .onAppear {

@@ -11,10 +11,10 @@ import SwiftData
 
 struct FriendsView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var followingManager: FollowingManager?
+    @State private var friendManager: FriendManager?
     @State private var selectedTab = 0
-    @State private var following: [User] = []
-    @State private var followers: [User] = []
+    @State private var friends: [User] = []
+    @State private var pendingRequests: [User] = []
     @State private var available: [User] = []
     @State private var searchText = ""
 
@@ -23,8 +23,12 @@ struct FriendsView: View {
             VStack(spacing: 0) {
                 // Tabs
                 Picker("", selection: $selectedTab) {
-                    Text("Following (\(following.count))").tag(0)
-                    Text("Followers (\(followers.count))").tag(1)
+                    Text("Amis (\(friends.count))").tag(0)
+                    if !pendingRequests.isEmpty {
+                        Text("Demandes (\(pendingRequests.count))").tag(1)
+                    } else {
+                        Text("Demandes").tag(1)
+                    }
                     Text("Découvrir").tag(2)
                 }
                 .pickerStyle(.segmented)
@@ -32,10 +36,10 @@ struct FriendsView: View {
 
                 // Content
                 TabView(selection: $selectedTab) {
-                    followingList
+                    friendsList
                         .tag(0)
 
-                    followersList
+                    requestsList
                         .tag(1)
 
                     discoverList
@@ -56,28 +60,20 @@ struct FriendsView: View {
         .searchable(text: $searchText, prompt: "Rechercher un utilisateur")
     }
 
-    // MARK: - Following List
+    // MARK: - Friends List
 
-    private var followingList: some View {
+    private var friendsList: some View {
         ScrollView {
             VStack(spacing: 12) {
-                if filteredFollowing.isEmpty {
+                if filteredFriends.isEmpty {
                     emptyState(
                         icon: "person.2.fill",
-                        title: "Aucune personne suivie",
-                        message: "Découvrez des athlètes à suivre dans l'onglet Découvrir"
+                        title: "Aucun ami",
+                        message: "Envoyez des demandes d'amis dans l'onglet Découvrir"
                     )
                 } else {
-                    ForEach(filteredFollowing) { user in
-                        NavigationLink {
-                            FriendProfileView(
-                                userID: user.id.uuidString,
-                                followingManager: followingManager!
-                            )
-                        } label: {
-                            UserRow(user: user, showFollowButton: false)
-                        }
-                        .buttonStyle(.plain)
+                    ForEach(filteredFriends) { user in
+                        FriendRow(user: user, friendManager: friendManager)
                     }
                 }
             }
@@ -85,32 +81,22 @@ struct FriendsView: View {
         }
     }
 
-    // MARK: - Followers List
+    // MARK: - Requests List
 
-    private var followersList: some View {
+    private var requestsList: some View {
         ScrollView {
             VStack(spacing: 12) {
-                if filteredFollowers.isEmpty {
+                if filteredRequests.isEmpty {
                     emptyState(
                         icon: "person.badge.plus.fill",
-                        title: "Aucun follower",
-                        message: "Partagez votre profil pour que d'autres vous suivent"
+                        title: "Aucune demande",
+                        message: "Les demandes d'amis apparaîtront ici"
                     )
                 } else {
-                    ForEach(filteredFollowers) { user in
-                        NavigationLink {
-                            FriendProfileView(
-                                userID: user.id.uuidString,
-                                followingManager: followingManager!
-                            )
-                        } label: {
-                            UserRow(
-                                user: user,
-                                showFollowButton: true,
-                                followingManager: followingManager
-                            )
+                    ForEach(filteredRequests) { user in
+                        FriendRequestRow(user: user, friendManager: friendManager!) {
+                            loadData()
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -127,15 +113,13 @@ struct FriendsView: View {
                     emptyState(
                         icon: "magnifyingglass",
                         title: "Aucun utilisateur trouvé",
-                        message: searchText.isEmpty ? "Tous les utilisateurs sont déjà suivis" : "Essayez une autre recherche"
+                        message: searchText.isEmpty ? "Tous les utilisateurs sont déjà amis" : "Essayez une autre recherche"
                     )
                 } else {
                     ForEach(filteredAvailable) { user in
-                        UserRow(
-                            user: user,
-                            showFollowButton: true,
-                            followingManager: followingManager
-                        )
+                        DiscoverUserRow(user: user, friendManager: friendManager!) {
+                            loadData()
+                        }
                     }
                 }
             }
@@ -168,30 +152,31 @@ struct FriendsView: View {
     // MARK: - Helpers
 
     private func setupManager() {
-        if followingManager == nil {
-            followingManager = FollowingManager(modelContext: modelContext)
+        if friendManager == nil {
+            friendManager = FriendManager(modelContext: modelContext)
         }
     }
 
     private func loadData() {
-        guard let manager = followingManager else { return }
-        following = manager.getFollowing()
-        followers = manager.getFollowers()
+        guard let manager = friendManager else { return }
+        manager.loadFriends()
+        friends = manager.friends
+        pendingRequests = manager.pendingRequests
         available = manager.getAvailableUsers()
     }
 
-    private var filteredFollowing: [User] {
+    private var filteredFriends: [User] {
         if searchText.isEmpty {
-            return following
+            return friends
         }
-        return following.filter { $0.username.localizedCaseInsensitiveContains(searchText) }
+        return friends.filter { $0.username.localizedCaseInsensitiveContains(searchText) }
     }
 
-    private var filteredFollowers: [User] {
+    private var filteredRequests: [User] {
         if searchText.isEmpty {
-            return followers
+            return pendingRequests
         }
-        return followers.filter { $0.username.localizedCaseInsensitiveContains(searchText) }
+        return pendingRequests.filter { $0.username.localizedCaseInsensitiveContains(searchText) }
     }
 
     private var filteredAvailable: [User] {
@@ -202,14 +187,11 @@ struct FriendsView: View {
     }
 }
 
-// MARK: - User Row
+// MARK: - Friend Row
 
-struct UserRow: View {
+struct FriendRow: View {
     let user: User
-    var showFollowButton: Bool = false
-    var followingManager: FollowingManager?
-
-    @State private var isFollowing = false
+    var friendManager: FriendManager?
 
     var body: some View {
         HStack(spacing: 16) {
@@ -254,40 +236,160 @@ struct UserRow: View {
 
             Spacer()
 
-            // Follow button
-            if showFollowButton, let manager = followingManager {
-                Button {
-                    toggleFollow(manager: manager)
-                } label: {
-                    Text(isFollowing ? "Suivi" : "Suivre")
-                        .font(.subheadline)
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+                .font(.title3)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Friend Request Row
+
+struct FriendRequestRow: View {
+    let user: User
+    let friendManager: FriendManager
+    let onUpdate: () -> Void
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Avatar
+            ZStack {
+                Circle()
+                    .fill(user.color.opacity(0.2))
+                    .frame(width: 50, height: 50)
+
+                Text(user.username.prefix(2).uppercased())
+                    .font(.headline)
+                    .foregroundColor(user.color)
+            }
+
+            // Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(user.username)
+                    .font(.headline)
+
+                Text("Lvl \(user.level)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            // Accept button
+            Button {
+                if friendManager.acceptFriendRequest(from: user.id.uuidString) {
+                    onUpdate()
+                }
+            } label: {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                    .font(.title2)
+            }
+            .buttonStyle(.plain)
+
+            // Decline button
+            Button {
+                if friendManager.declineFriendRequest(from: user.id.uuidString) {
+                    onUpdate()
+                }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.red)
+                    .font(.title2)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Discover User Row
+
+struct DiscoverUserRow: View {
+    let user: User
+    let friendManager: FriendManager
+    let onUpdate: () -> Void
+
+    @State private var requestSent = false
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Avatar
+            ZStack {
+                Circle()
+                    .fill(user.color.opacity(0.2))
+                    .frame(width: 50, height: 50)
+
+                Text(user.username.prefix(2).uppercased())
+                    .font(.headline)
+                    .foregroundColor(user.color)
+            }
+
+            // Info
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(user.username)
+                        .font(.headline)
+
+                    // Level badge
+                    Text("Lvl \(user.level)")
+                        .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(isFollowing ? Color.gray : Color.blue)
-                        .cornerRadius(20)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(user.color)
+                        .cornerRadius(8)
                 }
-                .buttonStyle(.plain)
+
+                HStack(spacing: 12) {
+                    Label("\(user.territoriesOwned)", systemImage: "map.fill")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Label(String(format: "%.0f km", user.totalDistanceKm), systemImage: "figure.run")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
+
+            Spacer()
+
+            // Add friend button
+            Button {
+                if friendManager.sendFriendRequest(to: user.id.uuidString) {
+                    requestSent = true
+                    onUpdate()
+                }
+            } label: {
+                if requestSent || friendManager.hasSentRequest(to: user.id.uuidString) {
+                    Text("Demande envoyée")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.gray)
+                        .cornerRadius(20)
+                } else {
+                    Image(systemName: "person.badge.plus.fill")
+                        .foregroundColor(.blue)
+                        .font(.title3)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(requestSent || friendManager.hasSentRequest(to: user.id.uuidString))
         }
         .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
         .onAppear {
-            if let manager = followingManager {
-                isFollowing = manager.isFollowing(userID: user.id.uuidString)
-            }
-        }
-    }
-
-    private func toggleFollow(manager: FollowingManager) {
-        if isFollowing {
-            _ = manager.unfollow(userID: user.id.uuidString)
-            isFollowing = false
-        } else {
-            _ = manager.follow(userID: user.id.uuidString)
-            isFollowing = true
+            requestSent = friendManager.hasSentRequest(to: user.id.uuidString)
         }
     }
 }

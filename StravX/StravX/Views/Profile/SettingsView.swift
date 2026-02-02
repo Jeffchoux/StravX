@@ -101,7 +101,7 @@ struct SettingsView: View {
                     HStack {
                         Label("Version", systemImage: "info.circle.fill")
                         Spacer()
-                        Text("1.0.0")
+                        Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")
                             .foregroundColor(.secondary)
                     }
                 }
@@ -172,7 +172,7 @@ struct SettingsView: View {
                     do {
                         try modelContext.save()
                     } catch {
-                        print("Erreur lors de la suppression: \(error)")
+                        AppLogger.error("Error deleting activities", error: error, category: AppLogger.data)
                     }
                 }
             } message: {
@@ -200,9 +200,9 @@ struct SettingsView: View {
 
         do {
             try modelContext.save()
-            print("✅ Privacy settings updated")
+            AppLogger.info("\(AppLogger.success) Privacy settings updated", category: AppLogger.user)
         } catch {
-            print("❌ Failed to update privacy settings: \(error)")
+            AppLogger.error("\(AppLogger.failure) Failed to update privacy settings", error: error, category: AppLogger.user)
         }
     }
 }

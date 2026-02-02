@@ -59,6 +59,7 @@ final class User {
     // MARK: - Social
 
     var friendsData: Data? // JSON encodé de [String] (UUIDs des amis)
+    var friendRequestsData: Data? // JSON encodé de [String] (UUIDs des demandes d'amis reçues)
     var followingIDsData: Data? // JSON encodé de [String] (UUIDs des personnes suivies)
     var followerIDsData: Data? // JSON encodé de [String] (UUIDs des followers)
     var publicProfile: Bool = true
@@ -143,6 +144,16 @@ final class User {
         }
         set {
             friendsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    var friendRequests: [String] {
+        get {
+            guard let data = friendRequestsData else { return [] }
+            return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+        }
+        set {
+            friendRequestsData = try? JSONEncoder().encode(newValue)
         }
     }
 

@@ -11,6 +11,7 @@ import SwiftData
 
 struct CreateCompetitionView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     let teamManager: TeamManager
 
     @State private var competitionName = ""
@@ -19,6 +20,9 @@ struct CreateCompetitionView: View {
     @State private var selectedDuration: DurationType = .week
     @State private var customDays = 7
     @State private var showingSuccess = false
+    @State private var showingFriendSelection = false
+    @State private var selectedFriends: Set<String> = []
+    @State private var friendManager: FriendManager?
 
     enum DurationType: String, CaseIterable {
         case day = "1 jour"
@@ -88,6 +92,36 @@ struct CreateCompetitionView: View {
                         : "La compétition se terminera automatiquement")
                 }
 
+                // Invite Friends Section
+                Section {
+                    Button {
+                        showingFriendSelection = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "person.badge.plus")
+                                .foregroundColor(.blue)
+
+                            if selectedFriends.isEmpty {
+                                Text("Inviter des amis")
+                                    .foregroundColor(.primary)
+                            } else {
+                                Text("\(selectedFriends.count) ami\(selectedFriends.count > 1 ? "s" : "") sélectionné\(selectedFriends.count > 1 ? "s" : "")")
+                                    .foregroundColor(.primary)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("Participants (optionnel)")
+                } footer: {
+                    Text("Les amis sélectionnés seront automatiquement ajoutés à la compétition")
+                }
+
                 // Preview Section
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
@@ -110,6 +144,15 @@ struct CreateCompetitionView: View {
                                 .foregroundColor(.green)
                             Text("Durée: \(durationText)")
                                 .fontWeight(.medium)
+                        }
+
+                        if !selectedFriends.isEmpty {
+                            HStack {
+                                Image(systemName: "person.2.fill")
+                                    .foregroundColor(.purple)
+                                Text("Participants: \(selectedFriends.count + 1)") // +1 pour le créateur
+                                    .fontWeight(.medium)
+                            }
                         }
                     }
                 } header: {
@@ -139,6 +182,15 @@ struct CreateCompetitionView: View {
                 }
             } message: {
                 Text("La compétition '\(competitionName)' a été créée avec succès !")
+            }
+            .sheet(isPresented: $showingFriendSelection) {
+                FriendSelectionView(selectedFriends: $selectedFriends, friendManager: friendManager)
+            }
+            .onAppear {
+                if friendManager == nil {
+                    friendManager = FriendManager(modelContext: modelContext)
+                    friendManager?.loadFriends()
+                }
             }
         }
     }
@@ -193,13 +245,125 @@ struct CreateCompetitionView: View {
     private func createCompetition() {
         guard !competitionName.isEmpty else { return }
 
-        if let _ = teamManager.createCompetition(
+        if let competition = teamManager.createCompetition(
             name: competitionName,
             type: selectedType,
             metric: selectedMetric,
             duration: competitionDuration
         ) {
+            // Ajouter les amis sélectionnés
+            for friendID in selectedFriends {
+                _ = competition.addParticipant(friendID)
+            }
+
+            // Sauvegarder les modifications
+            if !selectedFriends.isEmpty {
+                try? modelContext.save()
+            }
+
             showingSuccess = true
+        }
+    }
+}
+
+// MARK: - Friend Selection View
+
+struct FriendSelectionView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedFriends: Set<String>
+    let friendManager: FriendManager?
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if let friendManager = friendManager, !friendManager.friends.isEmpty {
+                    List {
+                        ForEach(friendManager.friends) { friend in
+                            Button {
+                                toggleSelection(friend.id.uuidString)
+                            } label: {
+                                HStack {
+                                    // Avatar
+                                    ZStack {
+                                        Circle()
+                                            .fill(friend.color.opacity(0.2))
+                                            .frame(width: 40, height: 40)
+
+                                        Text(friend.username.prefix(2).uppercased())
+                                            .font(.subheadline)
+                                            .foregroundColor(friend.color)
+                                    }
+
+                                    // Name
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(friend.username)
+                                            .font(.body)
+                                            .foregroundColor(.primary)
+
+                                        Text("Lvl \(friend.level)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    // Checkmark
+                                    if selectedFriends.contains(friend.id.uuidString) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.blue)
+                                            .font(.title3)
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.gray)
+                                            .font(.title3)
+                                    }
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                } else {
+                    VStack(spacing: 16) {
+                        Image(systemName: "person.2.slash")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray.opacity(0.5))
+
+                        Text("Aucun ami")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+
+                        Text("Ajoutez des amis pour les inviter à vos compétitions")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+                }
+            }
+            .navigationTitle("Inviter des amis")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Annuler") {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Valider") {
+                        dismiss()
+                    }
+                    .fontWeight(.bold)
+                }
+            }
+        }
+    }
+
+    private func toggleSelection(_ friendID: String) {
+        if selectedFriends.contains(friendID) {
+            selectedFriends.remove(friendID)
+        } else {
+            selectedFriends.insert(friendID)
         }
     }
 }

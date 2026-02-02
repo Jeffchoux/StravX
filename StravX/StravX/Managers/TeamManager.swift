@@ -324,4 +324,47 @@ class TeamManager {
             competition.participantIDs.contains(user.id.uuidString)
         }
     }
+
+    /// Rejoint une compétition avec un code
+    func joinCompetition(code: String) -> (success: Bool, message: String, competition: Competition?) {
+        guard let user = currentUser else {
+            return (false, "Utilisateur non trouvé", nil)
+        }
+
+        // Chercher la compétition par code
+        let descriptor = FetchDescriptor<Competition>(
+            predicate: #Predicate { competition in
+                competition.code == code
+            }
+        )
+
+        guard let competition = try? modelContext.fetch(descriptor).first else {
+            return (false, "Code invalide", nil)
+        }
+
+        // Vérifier si déjà participant
+        if competition.participantIDs.contains(user.id.uuidString) {
+            return (false, "Vous êtes déjà participant", competition)
+        }
+
+        // Vérifier si la compétition est terminée
+        if competition.hasEnded {
+            return (false, "Cette compétition est terminée", nil)
+        }
+
+        // Vérifier si la compétition est pleine
+        guard competition.addParticipant(user.id.uuidString) else {
+            return (false, "Compétition complète (\(competition.maxParticipants) participants max)", nil)
+        }
+
+        do {
+            try modelContext.save()
+            print("✅ Joined competition: \(competition.name)")
+            loadMyCompetitions()
+            return (true, "Bienvenue dans \(competition.name) !", competition)
+        } catch {
+            print("❌ Error joining competition: \(error)")
+            return (false, "Erreur lors de la sauvegarde", nil)
+        }
+    }
 }

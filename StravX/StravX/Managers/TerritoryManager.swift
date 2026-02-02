@@ -49,14 +49,14 @@ class TerritoryManager {
 
         if let existingUser = users.first {
             currentUser = existingUser
-            print("🟢 User loaded: \(existingUser.username)")
+            AppLogger.info("\(AppLogger.success) User loaded: \(existingUser.username)", category: AppLogger.user)
         } else {
             // Créer un nouvel utilisateur
             let newUser = User(username: "Player")
             modelContext.insert(newUser)
             try? modelContext.save()
             currentUser = newUser
-            print("🟢 New user created: \(newUser.username)")
+            AppLogger.info("\(AppLogger.success) New user created: \(newUser.username)", category: AppLogger.user)
         }
     }
 
@@ -72,7 +72,7 @@ class TerritoryManager {
     // MARK: - Territory Loading
 
     /// Charge les territoires autour d'une position
-    func loadTerritoriesAround(_ coordinate: CLLocationCoordinate2D, radius: Double = 1000) {
+    func loadTerritoriesAround(_ coordinate: CLLocationCoordinate2D, radius: Double = AppConstants.Territory.loadRadius) {
         // Obtenir toutes les tiles dans le rayon
         let tiles = GeoTile.tilesAround(coordinate: coordinate, radius: radius)
 
@@ -94,7 +94,7 @@ class TerritoryManager {
         visibleTerritories = territories
         lastUpdateLocation = coordinate
 
-        print("📍 Loaded \(territories.count) territories around location")
+        AppLogger.info("\(AppLogger.territoryIcon) Loaded \(territories.count) territories around location", category: AppLogger.territory)
     }
 
     /// Récupère un territoire par son tileID
@@ -223,11 +223,11 @@ class TerritoryManager {
             // Si le territoire est maintenant neutre, c'est une perte
             if territory.isNeutral {
                 notificationManager?.notifyTerritoryLost(territory: territory, capturedBy: user.username)
-                print("⚔️ Territory lost notification sent to \(ownerID)")
+                AppLogger.info("⚔️ Territory lost notification sent to \(ownerID)", category: AppLogger.territory)
             } else if !wasContested {
                 // Première attaque - notifier que le territoire est attaqué
                 notificationManager?.notifyTerritoryAttacked(territory: territory, attackerName: user.username)
-                print("⚔️ Territory attack notification sent to \(ownerID)")
+                AppLogger.info("⚔️ Territory attack notification sent to \(ownerID)", category: AppLogger.territory)
             }
         }
     }
@@ -250,7 +250,7 @@ class TerritoryManager {
         pendingCaptureNotifications.removeAll()
         pendingLevelUp = false
 
-        print("🚀 Territory tracking session started")
+        AppLogger.info("🚀 Territory tracking session started", category: AppLogger.territory)
     }
 
     /// Termine la session et retourne le résumé
@@ -268,7 +268,7 @@ class TerritoryManager {
 
         try? modelContext.save()
 
-        print("🏁 Session ended: \(summary.territoriesCaptured) territories, \(summary.xpGained) XP")
+        AppLogger.info("🏁 Session ended: \(summary.territoriesCaptured) territories, \(summary.xpGained) XP", category: AppLogger.territory)
 
         return summary
     }
@@ -306,12 +306,12 @@ class TerritoryManager {
 
         if changed {
             try? modelContext.save()
-            print("🕐 Decay applied to all territories")
+            AppLogger.info("🕐 Decay applied to all territories", category: AppLogger.territory)
         }
     }
 
     /// Nettoie les territoires neutres loin de l'utilisateur (optimisation)
-    func cleanupDistantTerritories(keepRadius: Double = 5000) {
+    func cleanupDistantTerritories(keepRadius: Double = AppConstants.Territory.cleanupRadius) {
         guard let userLocation = lastUpdateLocation else { return }
 
         let descriptor = FetchDescriptor<Territory>()
@@ -330,7 +330,7 @@ class TerritoryManager {
 
         if deleted > 0 {
             try? modelContext.save()
-            print("🗑️ Cleaned up \(deleted) distant neutral territories")
+            AppLogger.info("🗑️ Cleaned up \(deleted) distant neutral territories", category: AppLogger.territory)
         }
     }
 

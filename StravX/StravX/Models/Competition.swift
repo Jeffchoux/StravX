@@ -86,6 +86,7 @@ final class Competition {
 
     var id: UUID
     var name: String
+    var code: String // Code d'invitation unique (ex: "COMP-A3B9")
     var creatorID: String // UUID du créateur
     var createdAt: Date
 
@@ -112,9 +113,10 @@ final class Competition {
 
     // MARK: - Initialisation
 
-    init(name: String, creatorID: String, type: CompetitionType, metric: CompetitionMetric, duration: CompetitionDuration, startDate: Date = Date()) {
+    init(name: String, creatorID: String, type: CompetitionType, metric: CompetitionMetric, duration: CompetitionDuration, startDate: Date = Date(), code: String? = nil) {
         self.id = UUID()
         self.name = name
+        self.code = code ?? Competition.generateCode()
         self.creatorID = creatorID
         self.typeRaw = type.rawValue
         self.metricRaw = metric.rawValue
@@ -130,6 +132,15 @@ final class Competition {
         // Le créateur est automatiquement participant
         let participants = [creatorID]
         self.participantIDsData = try? JSONEncoder().encode(participants)
+    }
+
+    // MARK: - Génération de code
+
+    /// Génère un code d'invitation unique au format "COMP-XXXX"
+    static func generateCode() -> String {
+        let characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // Sans I, O, 0, 1 pour éviter confusion
+        let randomPart = String((0..<4).map { _ in characters.randomElement()! })
+        return "COMP-\(randomPart)"
     }
 
     // MARK: - Propriétés calculées

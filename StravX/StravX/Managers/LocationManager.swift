@@ -54,7 +54,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
         // 🔋 OPTIMISATION BATTERIE : Précision économique par défaut
         locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager.distanceFilter = 50 // Mise à jour tous les 50 mètres (économise la batterie)
+        locationManager.distanceFilter = AppConstants.Location.idleDistanceFilter
 
         // 🔋 Background updates DÉSACTIVÉS par défaut (activé seulement pendant une activité)
         locationManager.allowsBackgroundLocationUpdates = false
@@ -62,31 +62,27 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
         authorizationStatus = locationManager.authorizationStatus
 
-        print("🔵 LocationManager initialisé (mode économie d'énergie)")
-        print("🔵 Status actuel: \(authorizationStatus.rawValue)")
+        AppLogger.info("LocationManager initialized in power-saving mode", category: AppLogger.location)
+        AppLogger.debug("Authorization status: \(authorizationStatus.rawValue)", category: AppLogger.location)
     }
 
     // MARK: - Authorization
 
     func requestAuthorization() {
-        print("🟢 requestAuthorization appelé")
-        print("🟢 Status actuel: \(authorizationStatus.rawValue)")
+        AppLogger.info("Requesting location authorization", category: AppLogger.location)
+        AppLogger.debug("Current status: \(authorizationStatus.rawValue)", category: AppLogger.location)
 
         switch authorizationStatus {
         case .notDetermined:
             // Demander la permission pour la première fois
-            print("🟡 Demande de permission...")
+            AppLogger.info("Requesting when-in-use authorization", category: AppLogger.location)
             locationManager.requestWhenInUseAuthorization()
-            print("🟡 requestWhenInUseAuthorization appelé")
         case .authorizedWhenInUse:
-            // Si on a déjà la permission "pendant l'utilisation", on peut demander "toujours" si besoin
-            // Pour une app de tracking sportif, on pourrait demander la permission "toujours" pour le tracking en arrière-plan
-            // locationManager.requestAlwaysAuthorization() // Décommenter si besoin
-            print("Already authorized for when in use")
+            AppLogger.info("Already authorized for when-in-use", category: AppLogger.location)
         case .authorizedAlways:
-            print("Already authorized always")
+            AppLogger.info("Already authorized always", category: AppLogger.location)
         case .denied, .restricted:
-            print("Location access denied or restricted. Please enable location services in Settings.")
+            AppLogger.warning("Location access denied or restricted", category: AppLogger.location)
         @unknown default:
             break
         }
@@ -115,9 +111,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         case .authorizedWhenInUse, .authorizedAlways:
             // 🔋 OPTIMISATION : NE PAS démarrer automatiquement le GPS
             // Le GPS sera activé uniquement quand l'utilisateur lance une activité
-            print("✅ Autorisation accordée (GPS ne démarre pas automatiquement pour économiser la batterie)")
+            AppLogger.info("\(AppLogger.success) Location authorization granted (GPS idle for battery saving)", category: AppLogger.location)
         case .denied, .restricted:
-            print("❌ Accès localisation refusé")
+            AppLogger.warning("\(AppLogger.failure) Location access denied", category: AppLogger.location)
         case .notDetermined:
             break
         @unknown default:
@@ -145,7 +141,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
+        AppLogger.error("\(AppLogger.failure) Location error", error: error, category: AppLogger.location)
     }
 
     // MARK: - Activity Tracking
@@ -156,10 +152,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             if isNotDetermined {
                 // Si les permissions n'ont jamais été demandées, les demander
                 requestAuthorization()
-                print("Requesting location authorization...")
+                AppLogger.info("Requesting location authorization", category: AppLogger.location)
             } else if isDenied {
                 // Si les permissions sont refusées, informer l'utilisateur
-                print("Location access denied. Please enable in Settings.")
+                AppLogger.warning("Location access denied. Please enable in Settings", category: AppLogger.location)
             }
             return
         }
@@ -174,13 +170,13 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
         // 🔋 OPTIMISATION : Activer haute précision SEULEMENT pendant l'activité
         locationManager.desiredAccuracy = kCLLocationAccuracyBestForNavigation // Meilleure précision pour sport
-        locationManager.distanceFilter = 10 // Mise à jour tous les 10 mètres
+        locationManager.distanceFilter = AppConstants.Location.activeDistanceFilter
         locationManager.allowsBackgroundLocationUpdates = true // Permet le tracking en arrière-plan
         locationManager.pausesLocationUpdatesAutomatically = false // Empêche la pause automatique
         locationManager.showsBackgroundLocationIndicator = true
 
         locationManager.startUpdatingLocation()
-        print("📍 Tracking démarré (haute précision activée)")
+        AppLogger.info("\(AppLogger.locationIcon) Tracking started (high precision enabled)", category: AppLogger.location)
     }
 
     func stopTracking() {
@@ -189,26 +185,26 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
         // 🔋 OPTIMISATION : Revenir en mode économie d'énergie après l'activité
         locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        locationManager.distanceFilter = 50
+        locationManager.distanceFilter = AppConstants.Location.idleDistanceFilter
         locationManager.allowsBackgroundLocationUpdates = false
         locationManager.pausesLocationUpdatesAutomatically = true
         locationManager.showsBackgroundLocationIndicator = false
 
         locationManager.stopUpdatingLocation()
-        print("📍 Tracking arrêté (mode économie activé)")
+        AppLogger.info("\(AppLogger.locationIcon) Tracking stopped (power-saving mode enabled)", category: AppLogger.location)
     }
 
     func pauseTracking() {
         isTracking = false
         locationManager.stopUpdatingLocation()
-        print("⏸️ Tracking en pause")
+        AppLogger.info("⏸️ Tracking paused", category: AppLogger.location)
     }
 
     func resumeTracking() {
         guard trackingStartTime != nil else { return }
         isTracking = true
         locationManager.startUpdatingLocation()
-        print("▶️ Tracking repris")
+        AppLogger.info("▶️ Tracking resumed", category: AppLogger.location)
     }
 
     private func addLocationToRoute(_ location: CLLocation) {
@@ -220,7 +216,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             let distance = location.distance(from: last)
 
             // Filtrer les valeurs aberrantes (plus de 100m entre 2 points = probablement une erreur GPS)
-            if distance < 100 {
+            if distance < AppConstants.Location.maxPointDistance {
                 totalDistance += distance
             }
         }
@@ -277,7 +273,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             }
             return try JSONSerialization.data(withJSONObject: coordinates)
         } catch {
-            print("Error encoding route: \(error)")
+            AppLogger.error("Error encoding route", error: error, category: AppLogger.location)
             return nil
         }
     }
@@ -293,7 +289,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                 return CLLocationCoordinate2D(latitude: lat, longitude: lon)
             }
         } catch {
-            print("Error decoding route: \(error)")
+            AppLogger.error("Error decoding route", error: error, category: AppLogger.location)
             return nil
         }
     }

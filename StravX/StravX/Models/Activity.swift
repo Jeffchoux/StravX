@@ -52,9 +52,9 @@ final class Activity {
     private func validateActivity() -> (Bool, String?) {
         // Vitesses maximales réalistes par type d'activité
         let maxSpeedLimits: [String: Double] = [
-            "walking": 8.0,   // Marche rapide max ~8 km/h
-            "running": 25.0,  // Sprint élite max ~25 km/h
-            "cycling": 60.0,  // Cyclisme amateur max ~60 km/h
+            "walking": AppConstants.ActivityLimits.walkingMaxSpeed,
+            "running": AppConstants.ActivityLimits.runningMaxSpeed,
+            "cycling": AppConstants.ActivityLimits.cyclingMaxSpeed,
             "driving": 999.0  // Marqué comme invalide automatiquement
         ]
 
@@ -70,11 +70,11 @@ final class Activity {
 
         // Vérifier la vitesse maximale
         if maxSpeed > 0 {
-            if activityType == "walking" && maxSpeed > 12 {
+            if activityType == "walking" && maxSpeed > AppConstants.ActivityLimits.walkingMaxPeakSpeed {
                 return (false, "Vitesse maximale trop élevée pour de la marche")
-            } else if activityType == "running" && maxSpeed > 35 {
+            } else if activityType == "running" && maxSpeed > AppConstants.ActivityLimits.runningMaxPeakSpeed {
                 return (false, "Vitesse maximale irréaliste pour de la course")
-            } else if activityType == "cycling" && maxSpeed > 80 {
+            } else if activityType == "cycling" && maxSpeed > AppConstants.ActivityLimits.cyclingMaxPeakSpeed {
                 return (false, "Vitesse maximale suspecte pour du vélo")
             }
         }
@@ -82,7 +82,7 @@ final class Activity {
         // Vérifier la cohérence distance/temps
         if distance > 0 && duration > 0 {
             // Si moins de 10m parcourus en plus de 5 minutes, suspect
-            if distance < 10 && duration > 300 {
+            if distance < AppConstants.ActivityLimits.minValidDistance && duration > AppConstants.ActivityLimits.maxDurationForMinDistance {
                 return (false, "Distance trop faible pour la durée")
             }
         }
@@ -176,8 +176,8 @@ final class Activity {
     }
 
     var territoriesCaptured: Int {
-        // TODO: Implémenter le tracking des territoires capturés par activité
-        // Pour l'instant on retourne 0
+        // Note: Territory capture tracking per activity not yet implemented
+        // This will be added when implementing detailed activity analytics
         0
     }
 }

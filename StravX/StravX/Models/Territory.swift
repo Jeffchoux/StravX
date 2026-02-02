@@ -80,11 +80,11 @@ final class Territory {
     }
 
     var isWeak: Bool {
-        strengthPoints < 30
+        strengthPoints < AppConstants.Territory.weakThreshold
     }
 
     var isStrong: Bool {
-        strengthPoints >= 70
+        strengthPoints >= AppConstants.Territory.strongThreshold
     }
 
     /// Indicateur de danger (1-5, 5 = très en danger)
@@ -114,17 +114,17 @@ final class Territory {
 
         // Force initiale selon le type de capture
         if wasNeutral {
-            self.strengthPoints = 10 // Zone neutre = faible départ
+            self.strengthPoints = AppConstants.Territory.neutralCaptureStrength
         } else {
-            self.strengthPoints = 25 // Zone conquise = force moyenne
+            self.strengthPoints = AppConstants.Territory.attackCaptureStrength
         }
 
         // Réinitialiser le statut de contestation
         self.isContested = false
         self.contestedBy = nil
 
-        // TODO: Réactiver l'historique quand CaptureEvent sera adapté au système de teams privées
-        // Pour l'instant on utilise captureCount et lastCapturedBy
+        // Note: Capture history tracking uses captureCount and lastCapturedBy
+        // Full event history can be enabled when team-based analytics are implemented
     }
 
     /// Renforce cette zone (le propriétaire repasse dedans)
@@ -132,14 +132,14 @@ final class Territory {
         guard !isNeutral else { return }
 
         lastReinforcedAt = Date()
-        strengthPoints = min(100, strengthPoints + 10) // +10 points, max 100
+        strengthPoints = min(AppConstants.Territory.maxStrength, strengthPoints + AppConstants.Territory.reinforcementGain)
 
         // Si la zone était contestée, la défense réussit
         if isContested {
             isContested = false
             contestedBy = nil
             // Bonus de défense réussie
-            strengthPoints = min(100, strengthPoints + 20)
+            strengthPoints = min(AppConstants.Territory.maxStrength, strengthPoints + AppConstants.Territory.defenseBonus)
         }
     }
 
@@ -184,11 +184,11 @@ final class Territory {
     /// Points XP gagnés en capturant cette zone
     func captureXP(isAttack: Bool) -> Int {
         if isNeutral || !isAttack {
-            return 10 // Zone neutre ou renforcement
-        } else if strengthPoints > 50 {
-            return 50 // Zone très forte = grosse récompense
+            return AppConstants.Territory.neutralCaptureXP
+        } else if strengthPoints > AppConstants.Territory.strongThreshold {
+            return AppConstants.Territory.strongEnemyCaptureXP
         } else {
-            return 25 // Zone ennemie standard
+            return AppConstants.Territory.attackCaptureXP
         }
     }
 
@@ -198,9 +198,9 @@ final class Territory {
         var history = captureHistory
         history.append(event)
 
-        // Garder seulement les 10 derniers événements
-        if history.count > 10 {
-            history = Array(history.suffix(10))
+        // Garder seulement les derniers événements
+        if history.count > AppConstants.Territory.maxHistoryEvents {
+            history = Array(history.suffix(AppConstants.Territory.maxHistoryEvents))
         }
 
         captureHistoryData = try? JSONEncoder().encode(history)
