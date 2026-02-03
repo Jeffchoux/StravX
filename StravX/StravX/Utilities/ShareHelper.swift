@@ -10,16 +10,19 @@ import UIKit
 import SwiftUI
 
 class ShareHelper {
+    // Domaine Vercel pour les Universal Links
+    static let universalLinkDomain = "stravx-links.vercel.app"
+
     /// Partage un code d'invitation team via WhatsApp
     static func shareTeamToWhatsApp(team: Team) {
-        let deepLink = "stravx://join/team/\(team.code)"
+        let universalLink = "https://\(universalLinkDomain)/join/team/\(team.code)"
         let message = """
         🏃‍♂️ Rejoins ma team StravX !
 
         Team : \(team.name)
-        Code : \(team.code)
 
-        Ou clique ici : \(deepLink)
+        👉 Clique ici pour rejoindre :
+        \(universalLink)
         """
 
         shareToWhatsApp(message: message)
@@ -27,7 +30,7 @@ class ShareHelper {
 
     /// Partage une compétition via WhatsApp
     static func shareCompetitionToWhatsApp(competition: Competition) {
-        let deepLink = "stravx://join/competition/\(competition.id.uuidString)"
+        let universalLink = "https://\(universalLinkDomain)/join/competition/\(competition.id.uuidString)"
         let message = """
         🏆 Rejoins ma compétition StravX !
 
@@ -35,7 +38,8 @@ class ShareHelper {
         Type : \(competition.type.displayName)
         Métrique : \(competition.metric.displayName)
 
-        Clique ici pour rejoindre : \(deepLink)
+        👉 Clique ici pour rejoindre :
+        \(universalLink)
         """
 
         shareToWhatsApp(message: message)
@@ -74,14 +78,24 @@ class ShareHelper {
         }
     }
 
-    /// Génère un lien universel pour une team
+    /// Génère un Universal Link pour une team
     static func generateTeamDeepLink(team: Team) -> String {
-        return "stravx://join/team/\(team.code)"
+        return "https://\(universalLinkDomain)/join/team/\(team.code)"
     }
 
-    /// Génère un lien universel pour une compétition
+    /// Génère un Universal Link pour une compétition
     static func generateCompetitionDeepLink(competition: Competition) -> String {
-        return "stravx://join/competition/\(competition.id.uuidString)"
+        return "https://\(universalLinkDomain)/join/competition/\(competition.id.uuidString)"
+    }
+
+    /// Génère un lien court pour affichage (sans https://)
+    static func generateShortTeamLink(team: Team) -> String {
+        return "\(universalLinkDomain)/join/team/\(team.code)"
+    }
+
+    /// Génère un lien court pour affichage (sans https://)
+    static func generateShortCompetitionLink(competition: Competition) -> String {
+        return "\(universalLinkDomain)/join/competition/\(competition.id.uuidString)"
     }
 }
 

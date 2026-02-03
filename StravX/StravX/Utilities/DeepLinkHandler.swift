@@ -20,15 +20,36 @@ class DeepLinkHandler {
     var activeDeepLink: DeepLink = .none
 
     /// Parse une URL et retourne le DeepLink correspondant
+    /// Supporte à la fois les Custom URL Schemes (stravx://) et les Universal Links (https://)
     func handleURL(_ url: URL) -> DeepLink {
-        guard url.scheme == "stravx" else {
+        print("🔗 [DeepLinkHandler] Handling URL: \(url.absoluteString)")
+        print("🔗 [DeepLinkHandler] Scheme: \(url.scheme ?? "nil"), Host: \(url.host ?? "nil"), Path: \(url.path)")
+
+        // Supporter les deux formats:
+        // 1. Custom URL: stravx://join/team/ABC123
+        // 2. Universal Link: https://join-stravx.vercel.app/join/team/ABC123
+
+        guard url.scheme == "stravx" || url.scheme == "https" || url.scheme == "http" else {
+            print("❌ [DeepLinkHandler] Unsupported URL scheme: \(url.scheme ?? "nil")")
             return .none
+        }
+
+        // Pour Universal Links, vérifier que c'est bien notre domaine
+        if url.scheme == "https" || url.scheme == "http" {
+            guard let host = url.host,
+                  (host == "stravx-links.vercel.app" || host.hasSuffix(".vercel.app") || host.contains("stravx")) else {
+                print("❌ [DeepLinkHandler] Invalid host for Universal Link: \(url.host ?? "nil")")
+                return .none
+            }
         }
 
         let path = url.path
         let components = path.components(separatedBy: "/").filter { !$0.isEmpty }
 
+        print("🔍 [DeepLinkHandler] Path components: \(components)")
+
         guard components.count >= 2 else {
+            print("❌ [DeepLinkHandler] Not enough path components")
             return .none
         }
 
@@ -39,18 +60,19 @@ class DeepLinkHandler {
         case ("join", "team"):
             if components.count >= 3 {
                 let code = components[2]
-                print("📲 Deep link: Rejoindre team avec code \(code)")
+                print("✅ [DeepLinkHandler] Join team with code: \(code)")
                 return .joinTeam(code: code)
             }
 
         case ("join", "competition"):
             if components.count >= 3 {
                 let id = components[2]
-                print("📲 Deep link: Rejoindre compétition \(id)")
+                print("✅ [DeepLinkHandler] Join competition: \(id)")
                 return .joinCompetition(id: id)
             }
 
         default:
+            print("❌ [DeepLinkHandler] Unknown action/type: \(action)/\(type)")
             break
         }
 

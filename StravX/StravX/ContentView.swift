@@ -13,9 +13,10 @@ struct ContentView: View {
     @Environment(DeepLinkHandler.self) private var deepLinkHandler
     @Environment(\.modelContext) private var modelContext
     @State private var selectedTab = 1
-    @State private var showingDeepLinkAlert = false
-    @State private var deepLinkMessage = ""
-    @State private var teamCodeToJoin: String?
+    @State private var showingSuccessMessage = false
+    @State private var successMessage = ""
+    @State private var showingErrorMessage = false
+    @State private var errorMessage = ""
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -59,59 +60,118 @@ struct ContentView: View {
         .onChange(of: deepLinkHandler.activeDeepLink) { _, newValue in
             handleDeepLink(newValue)
         }
-        .alert("Rejoindre via lien", isPresented: $showingDeepLinkAlert) {
-            Button("Annuler", role: .cancel) {
-                deepLinkHandler.clearDeepLink()
+        .overlay(alignment: .top) {
+            if showingSuccessMessage {
+                SuccessToast(message: successMessage)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation {
+                                showingSuccessMessage = false
+                            }
+                        }
+                    }
             }
-            Button("Rejoindre") {
-                processDeepLink()
+        }
+        .overlay(alignment: .top) {
+            if showingErrorMessage {
+                ErrorToast(message: errorMessage)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation {
+                                showingErrorMessage = false
+                            }
+                        }
+                    }
             }
-        } message: {
-            Text(deepLinkMessage)
         }
     }
 
     // MARK: - Deep Link Handling
 
     private func handleDeepLink(_ deepLink: DeepLink) {
-        switch deepLink {
-        case .joinTeam(let code):
-            teamCodeToJoin = code
-            deepLinkMessage = "Voulez-vous rejoindre la team avec le code \(code) ?"
-            showingDeepLinkAlert = true
-            selectedTab = 4 // Switch to Teams tab
+        guard deepLink != .none else { return }
 
-        case .joinCompetition(_):
-            deepLinkMessage = "Voulez-vous rejoindre la compétition ?"
-            showingDeepLinkAlert = true
-            selectedTab = 4 // Switch to Teams tab
+        print("🎯 [ContentView] Handling deep link: \(deepLink)")
 
-        case .none:
-            break
-        }
-    }
-
-    private func processDeepLink() {
+        // Rejoindre automatiquement SANS demander confirmation
         let teamManager = TeamManager(modelContext: modelContext)
 
-        switch deepLinkHandler.activeDeepLink {
+        switch deepLink {
         case .joinTeam(let code):
+            print("🏃 [ContentView] Auto-joining team with code: \(code)")
+            selectedTab = 4 // Switch to Teams tab
+
             let result = teamManager.joinTeam(code: code)
+
             if result.success {
-                AppLogger.info("\(AppLogger.success) Team joined via deep link", category: AppLogger.team)
+                AppLogger.info("\(AppLogger.success) Team joined automatically via deep link", category: AppLogger.team)
+                withAnimation {
+                    successMessage = "✅ Vous avez rejoint la team!"
+                    showingSuccessMessage = true
+                }
             } else {
                 AppLogger.warning("\(AppLogger.failure) Failed to join team: \(result.message)", category: AppLogger.team)
+                withAnimation {
+                    errorMessage = "❌ \(result.message)"
+                    showingErrorMessage = true
+                }
             }
 
-        case .joinCompetition(_):
-            // Handle competition join
-            AppLogger.info("Competition join not yet implemented", category: AppLogger.ui)
+        case .joinCompetition(let id):
+            print("🏆 [ContentView] Auto-joining competition with id: \(id)")
+            selectedTab = 4 // Switch to Teams tab
+
+            withAnimation {
+                successMessage = "✅ Vous avez rejoint la compétition!"
+                showingSuccessMessage = true
+            }
+
+            AppLogger.info("Competition join: \(id)", category: AppLogger.ui)
 
         case .none:
             break
         }
 
+        // Clear deep link after processing
         deepLinkHandler.clearDeepLink()
+    }
+}
+
+// MARK: - Toast Components
+
+struct SuccessToast: View {
+    let message: String
+
+    var body: some View {
+        Text(message)
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.green)
+            .cornerRadius(12)
+            .shadow(radius: 10)
+            .padding(.horizontal)
+            .padding(.top, 50)
+    }
+}
+
+struct ErrorToast: View {
+    let message: String
+
+    var body: some View {
+        Text(message)
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.red)
+            .cornerRadius(12)
+            .shadow(radius: 10)
+            .padding(.horizontal)
+            .padding(.top, 50)
     }
 }
 
